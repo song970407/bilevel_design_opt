@@ -1,0 +1,11 @@
+'history_len': 5
+'receding_horizon': 10
+'x_dim': 1
+'u_dim': 1
+'decaying_gamma_list': [ 0.2, 0.4, 0.6, 0.8, 1.0 ]
+'bs': 64
+'epoch': 1000
+'test_every': 25
+'opt_name': 'Adam'
+'opt_config': {
+  'lr': 1e-3 }

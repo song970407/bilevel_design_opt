@@ -1,0 +1,6 @@
+'scaler': 'MinMax'
+'scale': [0.0, 1.0]
+'state_min': 0.0
+'state_max': 1.0
+'action_min': 0.0
+'action_max': 10.0

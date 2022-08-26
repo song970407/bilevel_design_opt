@@ -1,0 +1,3 @@
+'model_name': 'GAT'
+'hidden_dim': 64
+'model_saved_path': 'saved_model/GNN.pt'

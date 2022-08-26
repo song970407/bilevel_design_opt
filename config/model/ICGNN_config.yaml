@@ -1,0 +1,4 @@
+'model_name': 'ICGAT'
+'hidden_dim': 64
+'is_convex': True
+'model_saved_path': 'saved_model/ICGNN.pt'

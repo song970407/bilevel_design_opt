@@ -1,0 +1,4 @@
+'num_cells': 10
+'dt': 0.05
+'epsilon' : 0.2
+'domain_range' : [-1.0, 1.0]

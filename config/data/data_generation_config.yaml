@@ -1,0 +1,12 @@
+'traj_len': 100
+'num_train_traj': 60
+'num_val_traj': 20
+'num_test_traj': 20
+'num_sensor_bound': (1, 30)
+'num_heater_bound': (1, 20)
+'action_min' : 0.0
+'action_max' : 10.0
+'train_data_saved_path': 'data/train_data.pkl'
+'val_data_saved_path': 'data/val_data.pkl'
+'test_data_saved_path': 'data/test_data.pkl'
+'seed_num': 0
