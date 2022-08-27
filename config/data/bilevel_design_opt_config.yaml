@@ -1,0 +1,12 @@
+'num_x_list': [3, 4, 5]
+'num_heaters_list': [4, 8, 12, 16]
+'num_repeats': 10
+'domain_range' : [-1.0, 1.0]
+'epsilon' : 0.2
+'num_targets': 32
+'target_length': 24
+'max_heatups': 4
+'target_range': [0.0, 0.3]
+'initial_target': 0.0
+'saved_dir': 'data/bilevel_design_opt'
+'seed_num': 0

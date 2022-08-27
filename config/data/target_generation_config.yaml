@@ -1,6 +1,0 @@
-'num_targets': 32
-'target_length': 24
-'max_heatups': 4
-'target_range': [0.0, 0.3]
-'initial_target': 0.0
-
