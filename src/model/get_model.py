@@ -46,7 +46,6 @@ def get_classic_gat2_model(hidden_dim=16, is_convex=True):
     return m
 
 
-
 def get_icgcn_model(hidden_dim=16, is_convex=True):
     history_filter = HistoryFilterGCN(x_dim=1, u_dim=1, hidden_dim=hidden_dim)
     encoder = EncoderICGCN(u_dim=1, hidden_dim=hidden_dim, is_convex=is_convex)
@@ -61,7 +60,6 @@ def get_weighted_icgcn_model(hidden_dim=16, is_convex=True):
     decoder = ConvexDecoder(hidden_dim=hidden_dim, output_dim=1, is_convex=is_convex)
     m = GRNN(history_filter, encoder, decoder)
     return m
-
 
 
 def get_icgat_model(hidden_dim=16, is_convex=True):
@@ -93,8 +91,34 @@ model_func_dict = {
 }
 
 
-def get_model(model_name, hidden_dim=16, is_convex=True, saved_model_path=None):
+def _get_model(model_name, hidden_dim=16, is_convex=True, saved_model_path=None):
     m = model_func_dict[model_name](hidden_dim, is_convex)
     if saved_model_path is not None:
         m.load_state_dict(torch.load(saved_model_path, map_location='cpu'))
+    return m
+
+
+def get_linear_model(model_config):
+    return
+
+
+def get_gnn_model(model_config):
+    return
+
+
+def get_icgnn_model(model_config):
+    return
+
+
+model_name_dict = {
+    'Linear': get_linear_model,
+    'GNN': get_gnn_model,
+    'ICGNN': get_icgnn_model
+}
+
+
+def get_model(model_name, model_config, load_saved_model=False):
+    m = model_name_dict[model_name](model_config)
+    if load_saved_model:
+        m.load_state_dict(torch.load(model_config['model_saved_path'], map_location='cpu'))
     return m

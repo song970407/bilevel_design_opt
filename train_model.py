@@ -1,9 +1,11 @@
+import os
+import yaml
+import pickle
+import argparse
+
 from os.path import join
 from time import perf_counter
 from datetime import datetime
-
-import os
-import pickle
 
 import torch
 import wandb
@@ -11,181 +13,110 @@ import dgl
 from torch.utils.data import TensorDataset, DataLoader
 
 from src.utils.preprocess_data import preprocess_data
+from src.utils.generate_decaying_coefficient import generate_decaying_coefficient
 from src.model.get_model import get_model
 from src.utils.penalty_utils import get_nonnegative_penalty, project_params
 from src.utils.fix_seed import fix_seed
+
 fix_seed()
-DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-if not os.path.exists('saved_model'):
-    os.makedirs('saved_model')
+device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 
-def train_model(train_config):
-    # Training Parameter Settings
-    model_name = train_config['model_name']
-    hidden_dim = train_config['hidden_dim']
-    is_convex = train_config['is_convex']
-    data_ratio = train_config['data_ratio']
-    receding_history = train_config['receding_history']
+def train_model(model_name, train_data, val_data, data_preprocessing_config):
+    model_config = yaml.safe_load(open('config/model/{}_config.yaml'.format(model_name), 'r'))
+    train_config = yaml.safe_load(open('config/train/{}_config.yaml'.format(model_name), 'r'))
+
+    model_saved_path = model_config['model_saved_path']
+    history_len = train_config['history_len']
     receding_horizon = train_config['receding_horizon']
-    state_scaler = train_config['state_scaler']
-    action_scaler = train_config['action_scaler']
-    x_dim = train_config['x_dim']
-    u_dim = train_config['u_dim']
-    decaying_coefficient_list = train_config['decaying_coefficient_list']
-    bs = train_config['bs']
+    decaying_gammas = train_config['decaying_gammas']
     epoch = train_config['epoch']
-    save_every = train_config['save_every']
+    bs = train_config['bs']
     test_every = train_config['test_every']
-    lrs = train_config['lrs']
-    # Get Model
-    m = get_model(model_name=model_name, hidden_dim=hidden_dim, is_convex=is_convex).to(DEVICE)
+    opt_name = train_config['opt_name']
+    opt_config = train_config['opt_config']
+
+    data_preprocessing_config['history_len'] = history_len
+    data_preprocessing_config['receding_horizon'] = receding_horizon
+    data_preprocessing_config['device'] = device
+
+    train_hist_xs, train_hist_us, train_future_us, train_future_xs, train_gs, train_idxs = preprocess_data(train_data,
+                                                                                                           data_preprocessing_config)
+    val_hist_xs, val_hist_us, val_future_us, val_future_xs, val_gs, val_idxs = preprocess_data(val_data,
+                                                                                               data_preprocessing_config)
+    with torch.no_grad():
+        vg = dgl.batch([val_gs[idx[0]] for idx in val_idxs])
+        vhx = torch.cat([val_hist_xs[idx[0]][idx[1]] for idx in val_idxs])
+        vhu = torch.cat([val_hist_us[idx[0]][idx[1]] for idx in val_idxs])
+        vfu = torch.cat([val_future_us[idx[0]][idx[1]] for idx in val_idxs])
+        vfx = torch.cat([val_future_xs[idx[0]][idx[1]] for idx in val_idxs])
+    train_dataset = TensorDataset(train_idxs)
+    train_dl = DataLoader(train_dataset, batch_size=bs, shuffle=True)
+    iters = len(train_dl)
+
+    m = get_model(model_name, model_config).to(device)
     m.train()
 
-    # Data Loading & Pre-processing
-    train_data_path = 'data/ground_truth/train_data.pkl'
-    test_data_path = 'data/ground_truth/val_data.pkl'
-    with open(train_data_path, 'rb') as f:
-        train_data = pickle.load(f)
-    with open(test_data_path, 'rb') as f:
-        test_data = pickle.load(f)
-
-    train_history_xs_list, train_history_us_list, train_us_list, train_ys_list, train_graph_list, train_idxs = preprocess_data(
-        states=train_data['state_list'],
-        actions=train_data['action_list'],
-        graphs=train_data['graph_list'],
-        receding_history=receding_history,
-        receding_horizon=receding_horizon,
-        state_scaler=state_scaler,
-        action_scaler=action_scaler,
-        data_ratio=data_ratio,
-        device=DEVICE)
-    test_history_xs_list, test_history_us_list, test_us_list, test_ys_list, test_graph_list, test_idxs = preprocess_data(
-        states=test_data['state_list'],
-        actions=test_data['action_list'],
-        graphs=test_data['graph_list'],
-        receding_history=receding_history,
-        receding_horizon=receding_horizon,
-        state_scaler=state_scaler,
-        action_scaler=action_scaler,
-        device=DEVICE)
-    with torch.no_grad():
-        test_batch_size = test_idxs.shape[0]
-        test_gs = dgl.batch([test_graph_list[test_idxs[idx, 0]] for idx in range(test_batch_size)])
-        test_history_x = torch.cat([test_history_xs_list[test_idxs[idx, 0]][test_idxs[idx, 1]] for idx in range(test_batch_size)])
-        test_history_u = torch.cat([test_history_us_list[test_idxs[idx, 0]][test_idxs[idx, 1]] for idx in range(test_batch_size)])
-        test_u = torch.cat([test_us_list[test_idxs[idx, 0]][test_idxs[idx, 1]] for idx in range(test_batch_size)])
-        test_y = torch.cat([test_ys_list[test_idxs[idx, 0]][test_idxs[idx, 1]] for idx in range(test_batch_size)])
-    train_dataset = TensorDataset(train_idxs)
-
     run = wandb.init(config=train_config,
-                     project='ICGNN',
+                     project='Bilevel_Design_Opt',
                      entity='55mong',
                      reinit=True,
-                     group='HeatSimulatorIEEE',
-                     name='{}_{}'.format(model_name, data_ratio))
-    test_best_loss = float('inf')
-    now =datetime.now()
-    saved_path = now.strftime('saved_model/%Y%m%d%H%M%S')
-    if not os.path.exists(saved_path):
-        os.makedirs(saved_path)
-    with open(join(saved_path, 'train_config_{}_{}.pkl'.format(model_name, data_ratio)), 'wb') as f:
-        pickle.dump(train_config, f)
+                     name=model_name)
 
-    for lr in lrs:
-        for decaying_coefficient in decaying_coefficient_list:
-            print('Now Decaying Coefficient: {}'.format(decaying_coefficient))
-            decaying_list = []
-            coef = 1.0
-            for i in range(receding_horizon):
-                decaying_list.append(coef)
-                coef = coef * decaying_coefficient
-            decaying_list = torch.tensor(decaying_list, device=DEVICE)
+    num_updates = 0
+    val_best_loss = float('inf')
+    val_crit = torch.nn.SmoothL1Loss()
 
-            def criteria(y1, y2):
-                crit = torch.nn.SmoothL1Loss(reduction='none')
-                return torch.einsum('bnk, n->bnk', crit(y1, y2), decaying_list).mean()
+    for decaying_gamma in decaying_gammas:
+        opt = getattr(torch.optim, opt_name)(m.parameters(), lr=opt_config['lr'])
+        decaying_coefficient = generate_decaying_coefficient(decaying_gamma, receding_horizon, device)
 
-            def val_criteria(y1, y2):
-                crit = torch.nn.SmoothL1Loss()
-                return crit(y1, y2)
-            opt = torch.optim.Adam(m.parameters(), lr=lr)
+        def crit(x, y):
+            loss_fn = torch.nn.SmoothL1Loss(reduction='none')
+            loss = loss_fn(x, y).mean(dim=(0, 2))
+            return (decaying_coefficient * loss).mean()
 
-            num_updates = 0
-            # Start Training
-            for ep in range(epoch):
-                print('{} th epoch'.format(ep))
-                train_dl = DataLoader(train_dataset, batch_size=bs, shuffle=True)
-                iters = len(train_dl)
-                for i, (train_idx, ) in enumerate(train_dl):
-                    start_time = default_timer()
-                    batch_size = train_idx.shape[0]
-                    # Batching Data
-                    gs = dgl.batch([train_graph_list[train_idx[idx, 0]] for idx in range(batch_size)])
-                    history_x = torch.cat([train_history_xs_list[train_idx[idx, 0]][train_idx[idx, 1]] for idx in range(batch_size)])
-                    history_u = torch.cat([train_history_us_list[train_idx[idx, 0]][train_idx[idx, 1]] for idx in range(batch_size)])
-                    u = torch.cat([train_us_list[train_idx[idx, 0]][train_idx[idx, 1]] for idx in range(batch_size)])
-                    y = torch.cat([train_ys_list[train_idx[idx, 0]][train_idx[idx, 1]] for idx in range(batch_size)])
-
-                    # Compute the Forward path
-                    h0 = m.filter_history(gs, history_x, history_u)
-                    predicted_y = m.rollout(gs, h0, u)
-
-                    # Compute the Training loss
-                    loss = criteria(predicted_y, y)
-                    opt.zero_grad()
-                    loss.backward()
-                    opt.step()
-                    project_params(m)
-                    end_time = default_timer()
-
-                    log_dict = dict()
-                    log_dict['Epoch'] = ep + i / iters
-                    log_dict['fit_time'] = end_time - start_time
-                    log_dict['train_loss'] = loss.item()
-                    num_updates += 1
-                    if num_updates % test_every == 0:
-                        with torch.no_grad():
-                            test_h0 = m.filter_history(test_gs, test_history_x, test_history_u)
-                            test_predicted_y = m.rollout(test_gs, test_h0, test_u)
-                            test_loss = val_criteria(test_predicted_y, test_y)
-                            log_dict['test_loss'] = test_loss.item()
-                            if test_loss < test_best_loss:
-                                test_best_loss = test_loss
-                                torch.save(m.state_dict(), join(saved_path, '{}_{}.pt'.format(model_name, data_ratio)))
-                            log_dict['test_best_loss'] = test_best_loss
-                    if num_updates % save_every == 0:
-                        torch.save(m.state_dict(), join(wandb.run.dir, 'model.pt'))
-                    wandb.log(log_dict)
+        for ep in range(epoch):
+            for i, train_idx in enumerate(train_dl):
+                start_time = perf_counter()
+                tg = dgl.batch([train_gs[idx[0]] for idx in train_idx])
+                thx = torch.cat([train_hist_xs[idx[0]][idx[1]] for idx in train_idx])
+                thu = torch.cat([train_hist_us[idx[0]][idx[1]] for idx in train_idx])
+                tfu = torch.cat([train_future_us[idx[0]][idx[1]] for idx in train_idx])
+                tfx = torch.cat([train_future_xs[idx[0]][idx[1]] for idx in train_idx])
+                pfx = m.multistep_prediction(tg, thx, thu, tfu)
+                train_loss = crit(tfx, pfx)
+                opt.zero_grad()
+                train_loss.backward()
+                opt.step()
+                project_params(m)
+                num_updates += 1
+                log = {
+                    'Epoch': ep + i / iters,
+                    'fit_time': perf_counter() - start_time,
+                    'train_loss': train_loss.item()
+                }
+                if num_updates % test_every == 0:
+                    with torch.no_grad():
+                        val_loss = val_crit(m.multistep_prediction(vg, vhx, vhu, vfu), vfx)
+                    if val_loss.item() < val_best_loss:
+                        val_best_loss = val_loss.item()
+                        torch.save(m.state_dict(), model_saved_path)
+                    torch.save(m.state_dict(), join(wandb.run.dir, 'model.pt'))
+                    log['val_loss'] = val_loss.item()
+                    log['val_best_loss'] = val_best_loss
+                wandb.log(log)
     run.finish()
 
 
 if __name__ == '__main__':
-    with open('data/env_config.pkl', 'rb') as f:
-        env_config = pickle.load(f)
-    data_ratio_list = [1.0]
-    model_names = ['GAT', 'ICGAT']
-    hidden_dims = [64]
-    is_convex = False
-    for data_ratio in data_ratio_list:
-        for hidden_dim in hidden_dims:
-            for model_name in model_names:
-                train_config = {
-                    'model_name': model_name,
-                    'hidden_dim': hidden_dim,
-                    'is_convex': is_convex,
-                    'data_ratio': data_ratio,
-                    'receding_history': 5,
-                    'receding_horizon': 10,
-                    'state_scaler': env_config['state_scaler'],
-                    'action_scaler': env_config['action_scaler'],
-                    'x_dim': 1,
-                    'u_dim': 1,
-                    'decaying_coefficient_list': [0.2, 0.4, 0.6, 0.8, 1.0],
-                    'bs': 64,
-                    'epoch': int(1000 / data_ratio),
-                    'save_every': 25,
-                    'test_every': 25,
-                    'lrs': [1e-3]
-                }
-                train_model(train_config)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_name', default='Linear')
+    args = parser.parse_args()
+
+    data_generation_config = yaml.safe_load(open('config/data/data_generation_config.yaml', 'r'))
+    data_preprocessing_config = yaml.safe_load(open('config/data/data_preprocessing_config.yaml', 'r'))
+    train_data = pickle.load(open(data_generation_config['train_data_saved_path'], 'rb'))
+    val_data = pickle.load(open(data_generation_config['val_data_saved_path'], 'rb'))
+
+    train_model(args.model_name, train_data, val_data, data_preprocessing_config)

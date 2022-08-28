@@ -1,21 +1,6 @@
 import numpy as np
 
 
-def generate_fixed_position():
-    """
-    Generate fixed state and action position
-    state_pos: numpy array, [81 x 2] shape [[10, 10], [10, 20], ..., [90, 90]]
-    action_pos: numpy array, [81 x 2] shape [[10, 10], [10, 20], ..., [90, 90]]
-    :return: state_pos, action_pos
-    """
-    state_pos = np.zeros((81, 2), dtype=np.int64)
-    action_pos = np.zeros((81, 2), dtype=np.int64)
-    for itr in range(state_pos.shape[0]):
-        state_pos[itr] = [1 * (itr // 9 + 1), 1 * (itr % 9 + 1)]
-        action_pos[itr] = [1 * (itr // 9 + 1), 1 * (itr % 9 + 1)]
-    return state_pos, action_pos
-
-
 def generate_random_position(domain_range, I, J, epsilon):
     """
     Generate random state and action position
