@@ -1,8 +1,8 @@
-'traj_len': 10
-'num_train_traj': 2
-'num_val_traj': 2
-'num_test_traj': 2
-'num_sensors_bound': [1, 30]
+'traj_len': 100
+'num_train_traj': 80
+'num_val_traj': 10
+'num_test_traj': 10
+'num_sensors_bound': [1, 40]
 'num_heaters_bound': [1, 20]
 'action_min' : 0.0
 'action_max' : 10.0

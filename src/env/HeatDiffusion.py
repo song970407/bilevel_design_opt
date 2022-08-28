@@ -100,7 +100,7 @@ class HeatDiffusionSystem:
             action[:, k] = ou_process_clip(len=T)
         action = action * (self.action_max - self.action_min) / 2 + (self.action_max - self.action_min) / 2
         for t in range(T):
-            print('Timestep [{}] / [{}]'.format(t, T))
+            # print('Timestep [{}] / [{}]'.format(t, T))
             self.step(action[t])
         state_trajectory, action_trajectory = self.return_trajectory()
         return state_trajectory, action_trajectory
