@@ -1,5 +1,5 @@
 from os.path import join
-from time import perf_counter
+from timeit import default_timer
 from datetime import datetime
 
 import os

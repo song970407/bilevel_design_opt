@@ -3,7 +3,7 @@ import torch
 from src.model.HistoryFilters import *
 from src.model.Encoders import *
 from src.model.Decoders import *
-from src.model.GRNN import GRNN
+from src.model.SurrogateModel import GRNN
 
 
 def get_gcn_model(hidden_dim=16, is_convex=True):
