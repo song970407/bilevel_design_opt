@@ -2,8 +2,8 @@
 'num_train_traj': 2
 'num_val_traj': 2
 'num_test_traj': 2
-'num_sensors_bound': (1, 30)
-'num_heaters_bound': (1, 20)
+'num_sensors_bound': [1, 30]
+'num_heaters_bound': [1, 20]
 'action_min' : 0.0
 'action_max' : 10.0
 'train_data_saved_path': 'data/train_data.pkl'
