@@ -17,8 +17,6 @@ from src.utils.generate_decaying_coefficient import generate_decaying_coefficien
 from src.model.get_model import get_model
 from src.utils.penalty_utils import get_nonnegative_penalty, project_params
 from src.utils.fix_seed import fix_seed
-
-fix_seed()
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 
@@ -32,9 +30,12 @@ def train_model(model_name, train_data, val_data, data_preprocessing_config):
     decaying_gammas = train_config['decaying_gammas']
     epoch = train_config['epoch']
     bs = train_config['bs']
+    bs = 4
     test_every = train_config['test_every']
     opt_name = train_config['opt_name']
     opt_config = train_config['opt_config']
+    seed_num = train_config['seed_num']
+    fix_seed(seed_num)
 
     data_preprocessing_config['history_len'] = history_len
     data_preprocessing_config['receding_horizon'] = receding_horizon
@@ -77,7 +78,7 @@ def train_model(model_name, train_data, val_data, data_preprocessing_config):
             return (decaying_coefficient * loss).mean()
 
         for ep in range(epoch):
-            for i, train_idx in enumerate(train_dl):
+            for i, (train_idx, ) in enumerate(train_dl):
                 start_time = perf_counter()
                 tg = dgl.batch([train_gs[idx[0]] for idx in train_idx])
                 thx = torch.cat([train_hist_xs[idx[0]][idx[1]] for idx in train_idx])
@@ -118,5 +119,4 @@ if __name__ == '__main__':
     data_preprocessing_config = yaml.safe_load(open('config/data/data_preprocessing_config.yaml', 'r'))
     train_data = pickle.load(open(data_generation_config['train_data_saved_path'], 'rb'))
     val_data = pickle.load(open(data_generation_config['val_data_saved_path'], 'rb'))
-
     train_model(args.model_name, train_data, val_data, data_preprocessing_config)

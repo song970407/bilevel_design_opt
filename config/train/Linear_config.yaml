@@ -1,5 +1,5 @@
 'history_len': 5
-'receding_horizon': 3
+'receding_horizon': 10
 'decaying_gammas':
   - 0.2
   - 0.4
@@ -11,5 +11,5 @@
 'test_every': 25
 'opt_name': 'Adam'
 'opt_config': {
-  'lr': 1e-4 }
+  'lr': 0.0001}
 'seed_num': 0

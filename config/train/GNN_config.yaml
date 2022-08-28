@@ -11,5 +11,5 @@
 'test_every': 25
 'opt_name': 'Adam'
 'opt_config': {
-  'lr': 1e-3 }
+  'lr': 0.001 }
 'seed_num': 0

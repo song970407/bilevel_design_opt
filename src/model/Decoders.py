@@ -4,9 +4,18 @@ from src.nn.NonnegativeLinear import NonnegativeLinear1
 from src.nn.Activation import LearnableLeakyReLU, ConvexPReLU1
 
 
-class Decoder(nn.Module):
+class DecoderLinear(nn.Module):
     def __init__(self, hidden_dim, output_dim=1):
-        super(Decoder, self).__init__()
+        super(DecoderLinear, self).__init__()
+        self.decoder = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        return self.decoder(x)
+
+
+class DecoderNN(nn.Module):
+    def __init__(self, hidden_dim, output_dim=1):
+        super(DecoderNN, self).__init__()
         self.decoder = nn.Sequential(
             nn.Linear(hidden_dim, 64),
             nn.Tanh(),
@@ -21,9 +30,9 @@ class Decoder(nn.Module):
         return self.decoder(x)
 
 
-class ConvexDecoder(Decoder):
+class DecoderConvexNN(DecoderNN):
     def __init__(self, hidden_dim, is_convex, output_dim=1):
-        super(ConvexDecoder, self).__init__(hidden_dim, output_dim)
+        super(DecoderConvexNN, self).__init__(hidden_dim, output_dim)
         self.decoder = nn.Sequential(
             NonnegativeLinear1(hidden_dim, 64),
             ConvexPReLU1(64, is_convex=is_convex),
