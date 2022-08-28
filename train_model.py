@@ -1,11 +1,9 @@
-import os
 import yaml
 import pickle
 import argparse
 
 from os.path import join
 from time import perf_counter
-from datetime import datetime
 
 import torch
 import wandb
@@ -17,6 +15,7 @@ from src.utils.generate_decaying_coefficient import generate_decaying_coefficien
 from src.model.get_model import get_model
 from src.utils.penalty_utils import get_nonnegative_penalty, project_params
 from src.utils.fix_seed import fix_seed
+
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 
@@ -30,7 +29,6 @@ def train_model(model_name, train_data, val_data, data_preprocessing_config):
     decaying_gammas = train_config['decaying_gammas']
     epoch = train_config['epoch']
     bs = train_config['bs']
-    bs = 4
     test_every = train_config['test_every']
     opt_name = train_config['opt_name']
     opt_config = train_config['opt_config']
@@ -78,7 +76,9 @@ def train_model(model_name, train_data, val_data, data_preprocessing_config):
             return (decaying_coefficient * loss).mean()
 
         for ep in range(epoch):
-            for i, (train_idx, ) in enumerate(train_dl):
+            if ep % 10 == 0:
+                print('Epoch [{}] / [{}]'.format(ep, epoch))
+            for i, (train_idx,) in enumerate(train_dl):
                 start_time = perf_counter()
                 tg = dgl.batch([train_gs[idx[0]] for idx in train_idx])
                 thx = torch.cat([train_hist_xs[idx[0]][idx[1]] for idx in train_idx])
