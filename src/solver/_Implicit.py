@@ -1,8 +1,11 @@
+import time
 from time import perf_counter
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as th_opt
 import dgl
 
@@ -586,9 +589,3 @@ class DesignOptimizerParallel(DesignOptimizer):
                                                   self.device))
         graph = dgl.batch(graph_list)
         self.graph = dgl.batch([graph for _ in range(self.num_targets)])
-
-
-
-class ImplicitSolver(nn.Module):
-    def __init__(self, solver_config):
-        super(ImplicitSolver, self).__init__()

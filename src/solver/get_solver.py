@@ -1,18 +1,18 @@
-from src.solver.Implicit import *
-from src.solver.Single_layer import *
-from src.solver.Genetic import *
+from src.solver.Implicit import ImplicitSolver
+from src.solver.Single_layer import SingleLayerSolver
+from src.solver.Genetic import GeneticSolver
 
 
 def get_implicit_solver(solver_config):
-    return
+    return ImplicitSolver(solver_config)
 
 
 def get_single_layer_solver(solver_config):
-    return
+    return SingleLayerSolver(solver_config)
 
 
 def get_genetic_solver(solver_config):
-    return
+    return GeneticSolver(solver_config)
 
 
 solver_name_dict = {
