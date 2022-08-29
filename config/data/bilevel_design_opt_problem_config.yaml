@@ -8,5 +8,5 @@
 'max_heatups': 4
 'target_range': [0.0, 0.3]
 'initial_target': 0.0
-'saved_dir': 'data/bilevel_design_opt'
+'data_saved_dir': 'data/bilevel_design_opt'
 'seed_num': 0

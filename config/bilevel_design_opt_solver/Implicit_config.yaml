@@ -1,0 +1,10 @@
+'upper_max_iter': 100
+'upper_opt_name': 'Adam'
+'upper_opt_config': {
+  'lr': 0.2
+}
+'lower_max_iter': 200
+'lower_opt_name': 'Adam'
+'lower_opt_config': {
+  'lr': 0.2
+}

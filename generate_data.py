@@ -16,15 +16,13 @@ def generate_heat_diffusion_data(env_config, data_generation_config):
     dt = env_config['dt']
     epsilon = env_config['epsilon']
     domain_range = env_config['domain_range']
-
     traj_len = data_generation_config['traj_len']
     num_train_traj = data_generation_config['num_train_traj']
     num_val_traj = data_generation_config['num_val_traj']
     num_test_traj = data_generation_config['num_test_traj']
     num_sensors_bound = data_generation_config['num_sensors_bound']
     num_heaters_bound = data_generation_config['num_heaters_bound']
-    action_min = data_generation_config['action_min']
-    action_max = data_generation_config['action_max']
+    action_bound = data_generation_config['action_bound']
     train_data_saved_path = data_generation_config['train_data_saved_path']
     val_data_saved_path = data_generation_config['val_data_saved_path']
     test_data_saved_path = data_generation_config['test_data_saved_path']
@@ -43,8 +41,8 @@ def generate_heat_diffusion_data(env_config, data_generation_config):
                                       dt=dt,
                                       epsilon=epsilon,
                                       domain_range=domain_range,
-                                      action_min=action_min,
-                                      action_max=action_max,
+                                      action_min=action_bound[0],
+                                      action_max=action_bound[1],
                                       state_pos=state_pos,
                                       action_pos=action_pos)
             state_trajectory, action_trajectory = env.generate_random_trajectory(traj_len)
@@ -79,7 +77,7 @@ def generate_bilevel_design_opt_problem(bilevel_design_opt_problem_config):
     max_heatups = bilevel_design_opt_problem_config['max_heatups']
     target_range = bilevel_design_opt_problem_config['target_range']
     initial_target = bilevel_design_opt_problem_config['initial_target']
-    saved_dir = bilevel_design_opt_problem_config['saved_dir']
+    data_saved_dir = bilevel_design_opt_problem_config['data_saved_dir']
     seed_num = bilevel_design_opt_problem_config['seed_num']
     fix_seed(seed_num)
 
@@ -101,7 +99,7 @@ def generate_bilevel_design_opt_problem(bilevel_design_opt_problem_config):
                 problem['state_pos'].append(state_pos)
                 problem['action_pos'].append(action_pos)
                 problem['graph'].append(graph)
-            pickle.dump(problem, open('{}/problem_{}_{}.pkl'.format(saved_dir, num_x, num_heaters), 'wb'))
+            pickle.dump(problem, open('{}/problem_{}_{}.pkl'.format(data_saved_dir, num_x, num_heaters), 'wb'))
 
     target_values_list = []
     target_times_list = []
@@ -123,7 +121,7 @@ def generate_bilevel_design_opt_problem(bilevel_design_opt_problem_config):
             target_times.append(each_length - heatup_ratio[i])
         target['target_values'].append(target_values)
         target['target_times'].append(target_times)
-    pickle.dump(target, open('{}/target.pkl'.format(saved_dir), 'wb'))
+    pickle.dump(target, open('{}/target.pkl'.format(data_saved_dir), 'wb'))
 
 
 if __name__ == '__main__':
