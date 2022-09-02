@@ -1,3 +1,4 @@
+import os
 import yaml
 import pickle
 import argparse
@@ -20,8 +21,10 @@ device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 
 def train_model(model_name, train_data, val_data, data_preprocessing_config):
-    model_config = yaml.safe_load(open('config/model/{}_config.yaml'.format(model_name), 'r'))
-    train_config = yaml.safe_load(open('config/train/{}_config.yaml'.format(model_name), 'r'))
+    if not os.path.exists('saved_model/{}'.format(model_name)):
+        os.makedirs('saved_model/{}'.format(model_name))
+    model_config = yaml.safe_load(open('config/model/{}/model_config.yaml'.format(model_name), 'r'))
+    train_config = yaml.safe_load(open('config/model/{}/train_config.yaml'.format(model_name), 'r'))
 
     model_saved_path = model_config['model_saved_path']
     history_len = train_config['history_len']
@@ -56,7 +59,17 @@ def train_model(model_name, train_data, val_data, data_preprocessing_config):
     m = get_model(model_name, model_config).to(device)
     m.train()
 
-    run = wandb.init(config=train_config,
+    config = {
+        'model_name': model_name,
+        'model_config': model_config,
+        'train_config': train_config,
+        'data': {
+            'train_data': train_data,
+            'val_data': val_data,
+            'data_preprocessing_config': data_preprocessing_config
+        }
+    }
+    run = wandb.init(config=config,
                      project='Bilevel_Design_Opt',
                      entity='55mong',
                      reinit=True,

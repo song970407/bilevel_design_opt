@@ -1,14 +1,19 @@
 import torch
 
-from src.model.HistoryFilters import *
-from src.model.Encoders import *
-from src.model.Decoders import *
+from src.model.history_filter.Linear import HistoryFilterLinear
+from src.model.history_filter.GNN import HistoryFilterGNN
+from src.model.encoder.ICGNN import EncoderICGNN
+from src.model.encoder.GNN import EncoderGNN
+from src.model.encoder.Linear import EncoderLinear
+from src.model.decoder.ICGNN import DecoderConvexNN
+from src.model.decoder.GNN import DecoderNN
+from src.model.decoder.Linear import DecoderLinear
 from src.model.SurrogateModel import SurrogateModel
 
 
 def get_linear_model(model_config):
     hidden_dim = model_config['hidden_dim']
-    history_filter = HistoryFilterGNN(x_dim=1, u_dim=1, hidden_dim=hidden_dim)
+    history_filter = HistoryFilterLinear(x_dim=1, u_dim=1, hidden_dim=hidden_dim)
     encoder = EncoderLinear(u_dim=1, hidden_dim=hidden_dim)
     decoder = DecoderLinear(hidden_dim=hidden_dim, output_dim=1)
     m = SurrogateModel(history_filter, encoder, decoder)
@@ -28,7 +33,7 @@ def get_icgnn_model(model_config):
     hidden_dim = model_config['hidden_dim']
     is_convex = model_config['is_convex']
     history_filter = HistoryFilterGNN(x_dim=1, u_dim=1, hidden_dim=hidden_dim)
-    encoder = EncoderICGNN(u_dim=1, hidden_dim=hidden_dim, is_convex=is_convex)
+    encoder = EncoderICGNN(u_dim=1, hidden_dim=hidden_dim, is_convex=is_convex)b
     decoder = DecoderConvexNN(hidden_dim=hidden_dim, output_dim=1, is_convex=is_convex)
     m = SurrogateModel(history_filter, encoder, decoder)
     return m

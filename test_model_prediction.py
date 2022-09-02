@@ -39,7 +39,7 @@ def predict_future(model_names, test_data, data_preprocessing_config, test_confi
         return mean, std
 
     for model_name in model_names:
-        model_config = yaml.safe_load(open('config/model/{}_config.yaml'.format(model_name), 'r'))
+        model_config = yaml.safe_load(open('config/model/{}/model_config.yaml'.format(model_name), 'r'))
         m = get_model(model_name, model_config, True).to(device)
         with torch.no_grad():
             pfx = m.multistep_prediction(tg, thx, thu, tfu)

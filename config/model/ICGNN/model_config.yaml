@@ -1,0 +1,3 @@
+'hidden_dim': 64
+'is_convex': False
+'model_saved_path': 'saved_model/ICGNN/model.pt'

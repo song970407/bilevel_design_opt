@@ -35,11 +35,12 @@ def solve_bilevel_design_opt(args, env_config, bilevel_design_opt_problem_config
     problem_data = pickle.load(open('{}/problem_{}_{}.pkl'.format(data_saved_dir, num_x, num_heaters), 'rb'))
     target_data = pickle.load(open('{}/target.pkl'.format(data_saved_dir), 'rb'))
     solver_config = yaml.safe_load(open('config/bilevel_design_opt_solver/{}_config.yaml'.format(solver_name), 'r'))
+    solver_config['model'] = m
     solver_config['upper_bound'] = [domain_range[0] + epsilon, domain_range[1] + epsilon]
     solver_config['lower_bound'] = [minmax_scale(action_bound[0], action_scaler, scaler),
                                     minmax_scale(action_bound[1], action_scaler, scaler)]
     solver_config['device'] = device
-    solver = get_solver(solver_name, m, solver_config)
+    solver = get_solver(solver_name, solver_config)
 
     target = []
     for (target_value, target_time) in zip(target_data['target_values'], target_data['target_times']):
