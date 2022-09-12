@@ -12,6 +12,7 @@ from src.model.get_model import get_model
 from src.solver.get_solver import get_solver
 from src.utils.scale_data import minmax_scale
 from src.utils.get_target import generate_target_trajectory
+from src.utils.fix_seed import fix_seed
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 
@@ -44,6 +45,7 @@ def solve_bilevel_design_opt(args, env_config, bilevel_design_opt_problem_config
                                     minmax_scale(action_bound[1], action_scaler, scaler)]
     solver_config['device'] = device
     solver = get_solver(solver_name, solver_config)
+    fix_seed(solver_config['fix_seed'])
 
     target_list = []
     for (target_value, target_time) in zip(target_data['target_values'], target_data['target_times']):
@@ -67,7 +69,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--solver_name', type=str, default='cma_es')
     parser.add_argument('--num_x', type=int, default=3)
-    parser.add_argument('--num_heaters', type=int, default=4)
+    parser.add_argument('--num_heaters', type=int, default=5)
     parser.add_argument('--model_name', type=str, default='ICGNN')
     parser.add_argument('--device', type=str, default='device:0')
     args = parser.parse_args()

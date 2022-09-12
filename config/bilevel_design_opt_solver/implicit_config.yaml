@@ -8,3 +8,4 @@
 'lower_opt_config': {
   'lr': 0.2
 }
+seed_num: 0
