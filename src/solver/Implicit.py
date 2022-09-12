@@ -51,7 +51,6 @@ class LowerLevelOptimizer(nn.Module):
         :param graph: (dgl.graph) graph-structure
         :param num_states: (int) number of states
         :param num_actions: (int) number of actions
-        :param receding_horizon: (int) receding horizon
         :param ridge_coefficient: (float) coefficient for Ridge regularizer
         :param smoothness_coefficient: (float) coefficient for smoothness regularization
         :param u_min: (float) the lower bound of action values
