@@ -7,3 +7,4 @@ lower_opt_config: {
 }
 initial_mean: 0.0
 initial_std: 1.0
+seed_num: 0
