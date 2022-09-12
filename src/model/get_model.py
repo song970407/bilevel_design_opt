@@ -33,7 +33,7 @@ def get_icgnn_model(model_config):
     hidden_dim = model_config['hidden_dim']
     is_convex = model_config['is_convex']
     history_filter = HistoryFilterGNN(x_dim=1, u_dim=1, hidden_dim=hidden_dim)
-    encoder = EncoderICGNN(u_dim=1, hidden_dim=hidden_dim, is_convex=is_convex)b
+    encoder = EncoderICGNN(u_dim=1, hidden_dim=hidden_dim, is_convex=is_convex)
     decoder = DecoderConvexNN(hidden_dim=hidden_dim, output_dim=1, is_convex=is_convex)
     m = SurrogateModel(history_filter, encoder, decoder)
     return m
