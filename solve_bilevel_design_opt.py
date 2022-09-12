@@ -45,7 +45,7 @@ def solve_bilevel_design_opt(args, env_config, bilevel_design_opt_problem_config
                                     minmax_scale(action_bound[1], action_scaler, scaler)]
     solver_config['device'] = device
     solver = get_solver(solver_name, solver_config)
-    fix_seed(solver_config['fix_seed'])
+    fix_seed(solver_config['seed_num'])
 
     target_list = []
     for (target_value, target_time) in zip(target_data['target_values'], target_data['target_times']):
