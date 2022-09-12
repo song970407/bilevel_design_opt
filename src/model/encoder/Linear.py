@@ -105,7 +105,7 @@ class EncoderLinear(nn.Module):
         dst_pos = edges.dst['pos']
         edge_dis = edges.data['dis']
         src_u = edges.src['u']
-        inp = torch.cat([src_pos, dst_pos, edge_dis], dim=-1)
+        inp = torch.cat([src_pos, dst_pos, edge_dis, src_u], dim=-1)
         return {'u2h_msg': self.u2h_enc(inp)}
 
     def h2h_msg(self, edges):
@@ -114,25 +114,4 @@ class EncoderLinear(nn.Module):
         edge_dis = edges.data['dis']
         src_h = edges.src['h']
         inp = torch.cat([src_pos, dst_pos, edge_dis, src_h], dim=-1)
-        return {'u2h_msg': self.h2h_enc(inp)}
-
-
-
-
-
-
-
-
-
-
-    def h2h_msg(self, edges):
-        src_pos = edges.src['pos']
-        dst_pos = edges.dst['pos']
-        edge_dis = edges.data['dis']
-        src_h = edges.src['h']
-        inp = torch.cat([src_pos, dst_pos, edge_dis], dim=-1)
-        return {'h2h_logit': self.h2h_enc_dis(inp), 'h2h_msg': self.h2h_enc_h(src_h)}
-
-    @staticmethod
-    def message_func(edges):
-        return {'m': edges.data['h2h_attn'] * edges.data['h2h_msg']}
+        return {'h2h_msg': self.h2h_enc(inp)}

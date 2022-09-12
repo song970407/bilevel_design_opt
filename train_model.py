@@ -69,11 +69,11 @@ def train_model(model_name, train_data, val_data, data_preprocessing_config):
             'data_preprocessing_config': data_preprocessing_config
         }
     }
-    run = wandb.init(config=config,
+    """run = wandb.init(config=config,
                      project='Bilevel_Design_Opt',
                      entity='55mong',
                      reinit=True,
-                     name=model_name)
+                     name=model_name)"""
 
     num_updates = 0
     val_best_loss = float('inf')
@@ -116,11 +116,11 @@ def train_model(model_name, train_data, val_data, data_preprocessing_config):
                     if val_loss.item() < val_best_loss:
                         val_best_loss = val_loss.item()
                         torch.save(m.state_dict(), model_saved_path)
-                    torch.save(m.state_dict(), join(wandb.run.dir, 'model.pt'))
+                    # torch.save(m.state_dict(), join(wandb.run.dir, 'model.pt'))
                     log['val_loss'] = val_loss.item()
                     log['val_best_loss'] = val_best_loss
-                wandb.log(log)
-    run.finish()
+                # wandb.log(log)
+    # run.finish()
 
 
 if __name__ == '__main__':
