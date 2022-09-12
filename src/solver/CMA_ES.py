@@ -226,7 +226,7 @@ class CMAESSolver(nn.Module):
                                                     device=self.device,
                                                     opt_name=self.lower_opt_name,
                                                     opt_config=self.lower_opt_config)
-        optimizer = CMA(mean=np.ones(action_pos.size) * self.initial_mean, sigma=self.initial_std)
+        optimizer = CMA(mean=np.ones(action_pos.size) * self.initial_mean, sigma=self.initial_std, population_size=self.num_samples)
         total_loss_trajectory = []
         position_trajectory = []
         us_trajectory = []

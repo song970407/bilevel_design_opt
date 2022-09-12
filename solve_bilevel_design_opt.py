@@ -14,14 +14,24 @@ from src.utils.scale_data import minmax_scale
 from src.utils.get_target import generate_target_trajectory
 from src.utils.fix_seed import fix_seed
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+if not os.path.exists('opt_result'):
+    os.makedirs('opt_result')
 
 
-def solve_bilevel_design_opt(args, env_config, bilevel_design_opt_problem_config, data_generation_config, data_preprocessing_config):
+def solve_bilevel_design_opt(args):
     solver_name = args.solver_name
     num_x = args.num_x
     num_heaters = args.num_heaters
     model_name = args.model_name
     device = args.device
+
+    env_config = yaml.safe_load(open('config/env/env_config.yaml', 'r'))
+    bilevel_design_opt_problem_config = yaml.safe_load(open('config/data/bilevel_design_opt_problem_config.yaml', 'r'))
+    data_generation_config = yaml.safe_load(open('config/data/data_generation_config.yaml', 'r'))
+    data_preprocessing_config = yaml.safe_load(open('config/data/data_preprocessing_config.yaml', 'r'))
+
+    model_config = yaml.safe_load(open('config/model/{}/model_config.yaml'.format(model_name), 'r'))
+    train_config = yaml.safe_load(open('config/model/{}/train_config.yaml'.format(model_name), 'r'))
 
     domain_range = env_config['domain_range']
     epsilon = env_config['epsilon']
@@ -31,8 +41,6 @@ def solve_bilevel_design_opt(args, env_config, bilevel_design_opt_problem_config
     state_scaler = data_preprocessing_config['state_scaler']
     action_scaler = data_preprocessing_config['action_scaler']
 
-    model_config = yaml.safe_load(open('config/model/{}/model_config.yaml'.format(model_name), 'r'))
-    train_config = yaml.safe_load(open('config/model/{}/train_config.yaml'.format(model_name), 'r'))
     m = get_model(model_name, model_config, True).to(device)
     m.eval()
     problem_data = pickle.load(open('{}/problem_{}_{}.pkl'.format(data_saved_dir, num_x, num_heaters), 'rb'))
@@ -58,11 +66,19 @@ def solve_bilevel_design_opt(args, env_config, bilevel_design_opt_problem_config
     }
     if not os.path.exists('opt_result/{}'.format(solver_name)):
         os.mkdir('opt_result/{}'.format(solver_name))
-    for (state_pos, action_pos) in zip(problem_data['state_pos'], problem_data['action_pos']):
+    if solver_name == 'cma_es' or 'genetic':  # Parallelization is done by algorithm & No depends on the initial value
+        state_pos = problem_data['state_pos'][0]
+        action_pos = problem_data['action_pos'][0]
         opt_action_pos, opt_log = solver.solve(target_list, state_pos, action_pos)
-        opt_result['opt_action_pos'].append(opt_action_pos)
-        opt_result['opt_log'].append(opt_log)
+        opt_result['opt_action_pos'] = opt_action_pos
+        opt_result['opt_log'] = opt_log
         pickle.dump(opt_result, open('opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
+    else:
+        for (state_pos, action_pos) in zip(problem_data['state_pos'], problem_data['action_pos']):
+            opt_action_pos, opt_log = solver.solve(target_list, state_pos, action_pos)
+            opt_result['opt_action_pos'].append(opt_action_pos)
+            opt_result['opt_log'].append(opt_log)
+            pickle.dump(opt_result, open('opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
 
 
 if __name__ == '__main__':
@@ -71,11 +87,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_x', type=int, default=3)
     parser.add_argument('--num_heaters', type=int, default=5)
     parser.add_argument('--model_name', type=str, default='ICGNN')
-    parser.add_argument('--device', type=str, default='device:0')
+    parser.add_argument('--device', type=str, default='cuda:0')
     args = parser.parse_args()
 
-    env_config = yaml.safe_load(open('config/env/env_config.yaml', 'r'))
-    bilevel_design_opt_problem_config = yaml.safe_load(open('config/data/bilevel_design_opt_problem_config.yaml', 'r'))
-    data_generation_config = yaml.safe_load(open('config/data/data_generation_config.yaml', 'r'))
-    data_preprocessing_config = yaml.safe_load(open('config/data/data_preprocessing_config.yaml', 'r'))
-    solve_bilevel_design_opt(args, env_config, bilevel_design_opt_problem_config, data_generation_config, data_preprocessing_config)
+    solve_bilevel_design_opt(args)
