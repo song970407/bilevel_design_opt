@@ -64,10 +64,10 @@ def solve_bilevel_design_opt(args, env_config, bilevel_design_opt_problem_config
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--solver_name', default='implicit')
-    parser.add_argument('--num_x', default=3)
-    parser.add_argument('--num_heaters', default=4)
-    parser.add_argument('--model_name', default='Linear')
+    parser.add_argument('--solver_name', default='cma_es')
+    parser.add_argument('--num_x', type=int, default=3)
+    parser.add_argument('--num_heaters', type=int, default=4)
+    parser.add_argument('--model_name', default='ICGNN')
     args = parser.parse_args()
 
     env_config = yaml.safe_load(open('config/env/env_config.yaml', 'r'))
