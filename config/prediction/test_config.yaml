@@ -1,2 +1,2 @@
 'history_len': 5
-'receding_horizon': 30
+'receding_horizon': 10

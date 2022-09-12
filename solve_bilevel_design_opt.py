@@ -20,6 +20,7 @@ def solve_bilevel_design_opt(args, env_config, bilevel_design_opt_problem_config
     num_x = args.num_x
     num_heaters = args.num_heaters
     model_name = args.model_name
+    device = args.device
 
     domain_range = env_config['domain_range']
     epsilon = env_config['epsilon']
@@ -64,10 +65,11 @@ def solve_bilevel_design_opt(args, env_config, bilevel_design_opt_problem_config
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--solver_name', default='cma_es')
+    parser.add_argument('--solver_name', type=str, default='cma_es')
     parser.add_argument('--num_x', type=int, default=3)
     parser.add_argument('--num_heaters', type=int, default=4)
-    parser.add_argument('--model_name', default='ICGNN')
+    parser.add_argument('--model_name', type=str, default='ICGNN')
+    parser.add_argument('--device', type=str, default='device:0')
     args = parser.parse_args()
 
     env_config = yaml.safe_load(open('config/env/env_config.yaml', 'r'))

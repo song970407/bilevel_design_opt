@@ -4,6 +4,7 @@ import pickle
 
 import matplotlib.pyplot as plt
 from matplotlib import ticker
+import numpy as np
 import torch
 import dgl
 
@@ -36,6 +37,8 @@ def predict_future(model_names, test_data, data_preprocessing_config, test_confi
         loss_fn = torch.nn.SmoothL1Loss(reduction='none')
         mean = loss_fn(x, y).mean(dim=(0, 2)).detach().cpu().numpy()
         std = loss_fn(x, y).std(dim=(0, 2)).detach().cpu().numpy()
+        mean = np.concatenate([[0], mean])
+        std = np.concatenate([[0], std])
         return mean, std
 
     for model_name in model_names:
@@ -57,7 +60,7 @@ def plot_test_loss(model_loss_dict):
         axes.fill_between(range(mean.shape[0]), mean - gamma * std, mean + gamma * std, alpha=0.2)
     axes.set_xlabel('Rollout Steps', fontsize=20)
     axes.set_ylabel('Prediction MSE', fontsize=20)
-    axes.set_ylim([0.0, 0.001])
+    axes.set_ylim([0.0, 0.002])
     fmt = lambda x, pos: '{:.1f}'.format(x * 1e4)
     axes.yaxis.set_major_formatter(ticker.FuncFormatter(fmt))
     axes.tick_params(axis='x', labelsize=15)
