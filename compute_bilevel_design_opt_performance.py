@@ -89,7 +89,7 @@ def run_optimal_control(mpc_config, env_config, data_generation_config, data_pre
 
 if __name__ == '__main__':
     env_config = yaml.safe_load(open('config/env/env_config.yaml', 'r'))
-    data_generation_config = yaml.safe_load(open('config/data_generation_config.yaml', 'r'))
+    data_generation_config = yaml.safe_load(open('config/data/data_generation_config.yaml', 'r'))
     data_preprocessing_config = yaml.safe_load(open('config/data/data_preprocessing_config.yaml', 'r'))
     target = pickle.load(open('data/bilevel_design_opt/target.pkl', 'rb'))
 
