@@ -20,8 +20,8 @@ if not os.path.exists('bilevel_opt_result/optimal'):
 def run_optimal_control(mpc_config, env_config, data_preprocessing_config, state_pos, action_pos):
     ridge_coefficient = mpc_config['ridge_coefficient']
     smoothness_coefficient = mpc_config['smoothness_coefficient']
-    target_values_list = mpc_config['target_values_list']
-    target_times_list = mpc_config['target_times_list']
+    target_values_list = mpc_config['target_values']
+    target_times_list = mpc_config['target_times']
     max_iter = mpc_config['max_iter']
     loss_threshold = mpc_config['loss_threshold']
     opt_config = mpc_config['opt_config']
