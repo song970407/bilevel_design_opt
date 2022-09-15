@@ -116,7 +116,7 @@ if __name__ == '__main__':
     if not os.path.exists('bilevel_opt_result/optimal/{}'.format(solver_name)):
         os.makedirs('bilevel_opt_result/optimal/{}'.format(solver_name))
 
-    opt_result = pickle.load(open('bilevel_opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters)))
+    opt_result = pickle.load(open('bilevel_opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'rb'))
     state_pos = pickle.load(open('data/bilevel_design_opt/problem_{}_{}.pkl'.format(num_x, num_heaters), 'rb'))['state_pos']
     action_pos = opt_result['opt_action_pos']
     x_trajectory_list, u_trajectory_list, log_trajectory_list = run_optimal_control(mpc_config,
