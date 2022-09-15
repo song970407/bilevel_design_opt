@@ -4,6 +4,7 @@ import pickle
 
 import numpy as np
 import torch
+import yaml
 
 from src.env.HeatDiffusion import HeatDiffusionSystem
 from src.solver.optimal_control import OptimalControl
@@ -16,7 +17,7 @@ if not os.path.exists('bilevel_opt_result/optimal'):
     os.makedirs('bilevel_opt_result/optimal')
 
 
-def run_optimal_control(mpc_config, env_config, state_pos, action_pos):
+def run_optimal_control(mpc_config, env_config, data_preprocessing_config, state_pos, action_pos):
     ridge_coefficient = mpc_config['ridge_coefficient']
     smoothness_coefficient = mpc_config['smoothness_coefficient']
     target_values_list = mpc_config['target_values_list']
@@ -30,10 +31,10 @@ def run_optimal_control(mpc_config, env_config, state_pos, action_pos):
     dt = env_config['dt']
     epsilon = env_config['epsilon']
     domain_range = env_config['domain_range']
-    action_min = env_config['action_min']
-    action_max = env_config['action_max']
-    state_scaler = env_config['state_scaler']
-    action_scaler = env_config['action_scaler']
+    action_min = data_preprocessing_config['action_min']
+    action_max = data_preprocessing_config['action_max']
+    state_scaler = data_preprocessing_config['state_scaler']
+    action_scaler = data_preprocessing_config['action_scaler']
 
     num_states = state_pos.shape[0]
     num_actions = action_pos.shape[0]
@@ -87,10 +88,9 @@ def run_optimal_control(mpc_config, env_config, state_pos, action_pos):
 
 
 if __name__ == '__main__':
-    with open('data/env_config.pkl', 'rb') as f:
-        env_config = pickle.load(f)
-    with open('data/control/design_opt/target.pkl', 'rb') as f:
-        target = pickle.load(f)
+    env_config = yaml.safe_load(open('config/env/env_config.yaml', 'r'))
+    data_preprocessing_config = yaml.safe_load(open('config/data/data_preprocessing_config.yaml', 'r'))
+    target = pickle.load(open('data/bilevel_design_opt/target.pkl', 'rb'))
 
     mpc_config = {
         'ridge_coefficient': 0,
@@ -121,6 +121,7 @@ if __name__ == '__main__':
     action_pos = opt_result['opt_action_pos']
     x_trajectory_list, u_trajectory_list, log_trajectory_list = run_optimal_control(mpc_config,
                                                                                     env_config,
+                                                                                    data_preprocessing_config,
                                                                                     state_pos,
                                                                                     action_pos)
     pickle.dump(mpc_config, open('bilevel_opt_result/optimal/{}/mpc_config_{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
