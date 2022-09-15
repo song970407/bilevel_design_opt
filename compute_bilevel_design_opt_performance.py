@@ -17,7 +17,7 @@ if not os.path.exists('bilevel_opt_result/optimal'):
     os.makedirs('bilevel_opt_result/optimal')
 
 
-def run_optimal_control(mpc_config, env_config, data_preprocessing_config, state_pos, action_pos):
+def run_optimal_control(mpc_config, env_config, data_generation_config, data_preprocessing_config, state_pos, action_pos):
     ridge_coefficient = mpc_config['ridge_coefficient']
     smoothness_coefficient = mpc_config['smoothness_coefficient']
     target_values_list = mpc_config['target_values_list']
@@ -31,8 +31,8 @@ def run_optimal_control(mpc_config, env_config, data_preprocessing_config, state
     dt = env_config['dt']
     epsilon = env_config['epsilon']
     domain_range = env_config['domain_range']
-    action_min = data_preprocessing_config['action_min']
-    action_max = data_preprocessing_config['action_max']
+    action_min = data_generation_config['action_bound'][0]
+    action_max = data_generation_config['action_bound'][1]
     state_scaler = data_preprocessing_config['state_scaler']
     action_scaler = data_preprocessing_config['action_scaler']
 
@@ -89,6 +89,7 @@ def run_optimal_control(mpc_config, env_config, data_preprocessing_config, state
 
 if __name__ == '__main__':
     env_config = yaml.safe_load(open('config/env/env_config.yaml', 'r'))
+    data_generation_config = yaml.safe_load(open('config/data_generation_config.yaml', 'r'))
     data_preprocessing_config = yaml.safe_load(open('config/data/data_preprocessing_config.yaml', 'r'))
     target = pickle.load(open('data/bilevel_design_opt/target.pkl', 'rb'))
 
@@ -121,6 +122,7 @@ if __name__ == '__main__':
     action_pos = opt_result['opt_action_pos']
     x_trajectory_list, u_trajectory_list, log_trajectory_list = run_optimal_control(mpc_config,
                                                                                     env_config,
+                                                                                    data_generation_config,
                                                                                     data_preprocessing_config,
                                                                                     state_pos,
                                                                                     action_pos)
