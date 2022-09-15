@@ -12,8 +12,8 @@ from src.utils.fix_seed import fix_seed
 
 fix_seed()
 DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-if not os.path.exists('design_opt_experiment/optimal'):
-    os.makedirs('design_opt_experiment/optimal')
+if not os.path.exists('bilevel_opt_result/optimal'):
+    os.makedirs('bilevel_opt_result/optimal')
 
 
 def run_optimal_control(mpc_config, env_config, state_pos, action_pos):
@@ -87,73 +87,42 @@ def run_optimal_control(mpc_config, env_config, state_pos, action_pos):
 
 
 if __name__ == '__main__':
-    with open('data/control/design_opt/prb_config.pkl', 'rb') as f:
-        prb_config = pickle.load(f)
     with open('data/env_config.pkl', 'rb') as f:
         env_config = pickle.load(f)
-    with open('data/control/design_opt/target_config.pkl', 'rb') as f:
-        target_config = pickle.load(f)
+    with open('data/control/design_opt/target.pkl', 'rb') as f:
+        target = pickle.load(f)
 
-    num_x_list = [3, 4, 5]
-    num_heaters_list = [5, 10, 15, 20]
-    num_repeats = 10
     mpc_config = {
-        'ridge_coefficient': prb_config['ridge_coefficient'],
-        'smoothness_coefficient': prb_config['smoothness_coefficient'],
-        'target_values_list': target_config['target_values_list'],
-        'target_times_list': target_config['target_times_list'],
+        'ridge_coefficient': 0,
+        'smoothness_coefficient': 0,
+        'target_values_list': target['target_values_list'],
+        'target_times_list': target['target_times_list'],
         'max_iter': 200,
         'loss_threshold': 1e-9,
         'opt_config': {'lr': 2e-0},
         'scheduler_config': {'patience': 5, 'factor': 0.5, 'min_lr': 1e-4}
     }
-    model_names = ['ICGAT', 'GAT']
-    data_ratio_list = [1.0]
 
-    state_pos_list = []
-    action_pos_list = []
-    graph_list = []
-    num_graphs = len(target_config['target_values_list'])
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--num_x', type=int, default=3)
+    parser.add_argument('--num_heaters', type=int, default=5)
+    parser.add_argument('--solver_name', type=str, default='cma_es')
+    args = parser.parse_args()
 
-    for num_x in num_x_list:
-        for num_heaters in num_heaters_list:
-            if not os.path.exists('design_opt_experiment/optimal/{}_{}'.format(num_x, num_heaters)):
-                os.makedirs('design_opt_experiment/optimal/{}_{}'.format(num_x, num_heaters))
-            for r in range(num_repeats):
-                for model_name in model_names:
-                    for data_ratio in data_ratio_list:
-                        print('Now Num of x: {}, Num of Heater: {}, Repeat: {}, Model: {}_{}'.format(num_x, num_heaters,
-                                                                                                     r, model_name,
-                                                                                                     data_ratio))
-                        with open('design_opt_experiment/{}_{}/design_opt_experiment_result_{}_{}_{}.pkl'.format(num_x,
-                                                                                                              num_heaters,
-                                                                                                              model_name,
-                                                                                                              data_ratio, r),
-                                  'rb') as f:
-                            design_opt_experiment_result = pickle.load(f)
-                        graph = design_opt_experiment_result['optimized_graph']
-                        state_pos = graph.nodes['state'].data['pos'].cpu().detach().numpy()
-                        action_pos = graph.nodes['action'].data['pos'].cpu().detach().numpy()
-
-                        x_trajectory_list, u_trajectory_list, log_trajectory_list = run_optimal_control(mpc_config,
-                                                                                                        env_config,
-                                                                                                        state_pos,
-                                                                                                        action_pos)
-                        with open('design_opt_experiment/optimal/{}_{}/mpc_config_{}_{}_{}.pkl'.format(num_x,
-                                                                                                    num_heaters,
-                                                                                                    model_name,
-                                                                                                    data_ratio, r),
-                                  'wb') as f:
-                            pickle.dump(mpc_config, f)
-
-                        optimal_experiment_result = {
-                            'x_trajectory_list': x_trajectory_list,
-                            'u_trajectory_list': u_trajectory_list,
-                            'log_trajectory_list': log_trajectory_list
-                        }
-                        with open('design_opt_experiment/optimal/{}_{}/optimal_experiment_result_{}_{}_{}.pkl'.format(num_x,
-                                                                                                                  num_heaters,
-                                                                                                                  model_name,
-                                                                                                                  data_ratio, r),
-                                  'wb') as f:
-                            pickle.dump(optimal_experiment_result, f)
+    num_x = args.num_x
+    num_heaters = args.num_heaters
+    solver_name = args.solver_name
+    opt_result = pickle.load(open('bilevel_opt_result/{}/{]_{}.pkl'.format(solver_name, num_x, num_heaters)))
+    state_pos = pickle.load(open('data/bilevel_design_opt/problem_{}_{}.pkl'.format(num_x, num_heaters), 'rb'))['state_pos']
+    action_pos = opt_result['opt_action_pos']
+    x_trajectory_list, u_trajectory_list, log_trajectory_list = run_optimal_control(mpc_config,
+                                                                                    env_config,
+                                                                                    state_pos,
+                                                                                    action_pos)
+    pickle.dump(mpc_config, open('bilevel_opt_result/optimal/{}/mpc_config_{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
+    optimal_result = {
+        'x_trajectory_list': x_trajectory_list,
+        'u_trajectory_list': u_trajectory_list,
+        'log_trajectory_list': log_trajectory_list
+    }
+    pickle.dump(optimal_result, open('bilevel_opt_result/optimal/{}/optimal_result_{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))

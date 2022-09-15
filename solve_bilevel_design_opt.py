@@ -14,8 +14,8 @@ from src.utils.scale_data import minmax_scale
 from src.utils.get_target import generate_target_trajectory
 from src.utils.fix_seed import fix_seed
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-if not os.path.exists('opt_result'):
-    os.makedirs('opt_result')
+if not os.path.exists('bilevel_opt_result'):
+    os.makedirs('bilevel_opt_result')
 
 
 def solve_bilevel_design_opt(args):
@@ -64,21 +64,21 @@ def solve_bilevel_design_opt(args):
         'opt_action_pos': [],
         'opt_log': []
     }
-    if not os.path.exists('opt_result/{}'.format(solver_name)):
-        os.mkdir('opt_result/{}'.format(solver_name))
+    if not os.path.exists('bilevel_opt_result/{}'.format(solver_name)):
+        os.mkdir('bilevel_opt_result/{}'.format(solver_name))
     if solver_name == 'cma_es' or 'genetic':  # Parallelization is done by algorithm & No depends on the initial value
         state_pos = problem_data['state_pos'][0]
         action_pos = problem_data['action_pos'][0]
         opt_action_pos, opt_log = solver.solve(target_list, state_pos, action_pos)
         opt_result['opt_action_pos'] = opt_action_pos
         opt_result['opt_log'] = opt_log
-        pickle.dump(opt_result, open('opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
+        pickle.dump(opt_result, open('bilevel_opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
     else:
         for (state_pos, action_pos) in zip(problem_data['state_pos'], problem_data['action_pos']):
             opt_action_pos, opt_log = solver.solve(target_list, state_pos, action_pos)
             opt_result['opt_action_pos'].append(opt_action_pos)
             opt_result['opt_log'].append(opt_log)
-            pickle.dump(opt_result, open('opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
+            pickle.dump(opt_result, open('bilevel_opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
 
 
 if __name__ == '__main__':

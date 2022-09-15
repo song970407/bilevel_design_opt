@@ -132,4 +132,4 @@ dmypy.json
 
 # No log file
 /wandb
-/opt_result
+/bilevel_opt_result
