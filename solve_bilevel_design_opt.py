@@ -66,7 +66,7 @@ def solve_bilevel_design_opt(args):
     }
     if not os.path.exists('bilevel_opt_result/{}'.format(solver_name)):
         os.mkdir('bilevel_opt_result/{}'.format(solver_name))
-    if solver_name == 'cma_es' or 'genetic':  # Parallelization is done by algorithm & No depends on the initial value
+    if solver_name == 'cma_es':  # Parallelization is done by algorithm & No depends on the initial value
         state_pos = problem_data['state_pos'][0]
         action_pos = problem_data['action_pos'][0]
         opt_action_pos, opt_log = solver.solve(target_list, state_pos, action_pos)
