@@ -41,11 +41,9 @@ class LowerLevelOptimizer(nn.Module):
                  u_min: float = 0.0,
                  u_max: float = 1.0,
                  max_iter: int = 200,
-                 loss_threshold: float = 1e-8,
                  is_logging: bool = True,
                  device: str = 'cpu',
-                 opt_config: dict = None,
-                 scheduler_config: dict = None):
+                 opt_config: dict = None):
         """
         :param model: (nn.Module) nn-parametrized dynamic model
         :param graph: (dgl.graph) graph-structure
@@ -59,7 +57,6 @@ class LowerLevelOptimizer(nn.Module):
         :param is_logging:
         :param device: (str) The computation device that is used for the MPC optimization
         :param opt_config: (dict)
-        :param scheduler_config: (dict)
         """
         super(LowerLevelOptimizer, self).__init__()
 
@@ -75,10 +72,8 @@ class LowerLevelOptimizer(nn.Module):
         self.u_min = u_min
         self.u_max = u_max
         self.max_iter = max_iter
-        self.loss_threshold = loss_threshold
         self.is_logging = is_logging
         self.opt_config = opt_config
-        self.scheduler_config = scheduler_config
 
         if device is None:
             print("Running device is not given. Infer the running device from the system configuration ...")
@@ -155,7 +150,6 @@ class LowerLevelOptimizer(nn.Module):
             nn.init.constant_(us, (self.u_max - self.u_min) / 2)
             us = torch.nn.Parameter(us).to(self.device)
         opt = th_opt.Adam([us], **self.opt_config)
-        scheduler = th_opt.lr_scheduler.ReduceLROnPlateau(opt, **self.scheduler_config)
 
         individual_loss_trajectory = []
         total_loss_trajectory = []  # the loss over the optimization steps
@@ -210,9 +204,7 @@ class LowerLevelOptimizer(nn.Module):
         return optimal_u, optimal_lambda_min, optimal_lambda_max, log
 
     def predict_future(self, us):
-        h0 = self.model.filter_history(self.graph, self.hist_xs, self.hist_us)
-        prediction = self.model.multi_step_prediction(self.graph, h0, us)
-        return prediction
+        return self.model.multistep_prediction(self.graph, self.hist_xs, self.hist_us, us)
 
 
 class DesignOptimizer(nn.Module):
@@ -435,9 +427,7 @@ class DesignOptimizer(nn.Module):
         return log
 
     def predict_future(self, us):
-        h0 = self.model.filter_history(self.graph, self.hist_xs, self.hist_us)
-        prediction = self.model.multi_step_prediction(self.graph, h0, us)
-        return prediction
+        return self.model.multistep_prediction(self.graph, self.hist_xs, self.hist_us, us)
 
 
 class ImplicitSolver(nn.Module):
@@ -464,12 +454,6 @@ class ImplicitSolver(nn.Module):
 
         self.crit = torch.nn.MSELoss(reduction='none')
         self.criteria_smoothness = torch.nn.MSELoss(reduction='none')
-
-        self.pos_dimension = self.graph.nodes['action'].data['pos'].shape[1]
-        self.shape_position = (self.num_actions, self.pos_dimension)
-        self.shape_us = (self.total_actions, self.receding_horizon, 1)
-        self.num_position = self.num_actions * self.pos_dimension
-        self.num_u = self.total_actions * self.receding_horizon * 1
 
     def set_position(self, position):
         with torch.no_grad():
@@ -622,9 +606,28 @@ class ImplicitSolver(nn.Module):
         self.total_states = self.num_states * self.num_targets
         self.total_actions = self.num_actions * self.num_targets
         self.receding_horizon = self.target_list[0].shape[1]
+
+        self.pos_dimension = self.graph.nodes['action'].data['pos'].shape[1]
+        self.shape_position = (self.num_actions, self.pos_dimension)
+        self.shape_us = (self.total_actions, self.receding_horizon, 1)
+        self.num_position = self.num_actions * self.pos_dimension
+        self.num_u = self.total_actions * self.receding_horizon * 1
+
+        self.lower_level_optimizer = LowerLevelOptimizer(model=self.model,
+                                                         graph=self.graph,
+                                                         num_states=self.num_states,
+                                                         num_actions=self.num_actions,
+                                                         history_len=self.history_len,
+                                                         ridge_coefficient=self.ridge_coefficient,
+                                                         smoothness_coefficient=self.smoothness_coefficient,
+                                                         u_min=self.u_min,
+                                                         u_max=self.u_max,
+                                                         max_iter=self.lower_max_iter,
+                                                         is_logging=True,
+                                                         device=self.device,
+                                                         opt_config=self.lower_opt_config, )
+
         return self._solve()
 
     def predict_future(self, us):
-        h0 = self.model.filter_history(self.graph, self.hist_xs, self.hist_us)
-        prediction = self.model.multi_step_prediction(self.graph, h0, us)
-        return prediction
+        return self.model.multistep_prediction(self.graph, self.hist_xs, self.hist_us, us)

@@ -83,10 +83,10 @@ def solve_bilevel_design_opt(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--solver_name', type=str, default='cma_es')
+    parser.add_argument('--solver_name', type=str, default='implicit')
     parser.add_argument('--num_x', type=int, default=3)
     parser.add_argument('--num_heaters', type=int, default=5)
-    parser.add_argument('--model_name', type=str, default='ICGNN')
+    parser.add_argument('--model_name', type=str, default='Linear')
     parser.add_argument('--device', type=str, default='cuda:0')
     args = parser.parse_args()
 
