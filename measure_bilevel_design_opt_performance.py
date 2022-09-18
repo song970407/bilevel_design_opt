@@ -87,7 +87,7 @@ if __name__ == '__main__':
                                                                           np.average(opt_loss)))
                 bilevel_path = 'bilevel_opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters)
                 bilevel_opt_result = pickle.load(open(bilevel_path, 'rb'))
-                opt_action_pos = bilevel_opt_result['opt_action_pos'].cpu().detach().numpy()
+                opt_action_pos = bilevel_opt_result['opt_action_pos']
                 print(opt_action_pos.shape)
                 axes_flatten[len(solver_names) + p_idx].scatter(opt_action_pos[:, 0], opt_action_pos[:, 1])
                 axes_flatten[len(solver_names) + p_idx].set_xlim([-1, 1])
