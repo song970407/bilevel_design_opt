@@ -60,25 +60,19 @@ def solve_bilevel_design_opt(args):
         target_ref = generate_target_trajectory(target_value, target_time)
         target_ref = torch.tensor([target_ref for _ in range(num_x ** 2)], device=device).float().unsqueeze(dim=-1)
         target_list.append(target_ref)
-    opt_result = {
-        'opt_action_pos': [],
-        'opt_log': []
-    }
     if not os.path.exists('bilevel_opt_result/{}'.format(solver_name)):
         os.mkdir('bilevel_opt_result/{}'.format(solver_name))
     if solver_name == 'cma_es':  # Parallelization is done by algorithm & No depends on the initial value
         state_pos = problem_data['state_pos'][0]
         action_pos = problem_data['action_pos'][0]
         opt_action_pos, opt_log = solver.solve(target_list, state_pos, action_pos)
-        opt_result['opt_action_pos'] = opt_action_pos
-        opt_result['opt_log'] = opt_log
-        pickle.dump(opt_result, open('bilevel_opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
     else:
-        for (state_pos, action_pos) in zip(problem_data['state_pos'], problem_data['action_pos']):
-            opt_action_pos, opt_log = solver.solve(target_list, state_pos, action_pos)
-            opt_result['opt_action_pos'].append(opt_action_pos)
-            opt_result['opt_log'].append(opt_log)
-            pickle.dump(opt_result, open('bilevel_opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
+        opt_action_pos, opt_log = solver.solve(target_list, problem_data['state_pos'], problem_data['action_pos'])
+    opt_result = {
+        'opt_action_pos': opt_action_pos,
+        'opt_log': opt_log
+    }
+    pickle.dump(opt_result, open('bilevel_opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
 
 
 if __name__ == '__main__':

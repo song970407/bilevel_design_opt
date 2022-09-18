@@ -592,7 +592,7 @@ class ImplicitSolver(nn.Module):
         }
         return best_position, log
 
-    def solve(self, target_list, state_pos, action_pos):
+    def solve_one(self, target_list, state_pos, action_pos):
         torch_state_pos = torch.from_numpy(state_pos).float().to(self.device)
         torch_action_pos = torch.from_numpy(action_pos).float().to(self.device)
         self.graph = generate_full_graph(torch_state_pos, torch_action_pos, self.device)
@@ -631,3 +631,41 @@ class ImplicitSolver(nn.Module):
 
     def predict_future(self, us):
         return self.model.multistep_prediction(self.graph, self.hist_xs, self.hist_us, us)
+
+    def solve(self, target_list, state_pos_list, action_pos_list):
+
+        opt_action_pos_list = []
+        opt_log_list = []
+        for (state_pos, action_pos) in zip(state_pos_list, action_pos_list):
+            opt_action_pos, opt_log = self.solve_one(target_list, state_pos, action_pos)
+            opt_action_pos_list.append(opt_action_pos)
+            opt_log_list.append(opt_log)
+
+        opt_action_pos = None
+        bilevel_opt_log = {
+            'total_loss_trajectory': [],
+            'position_trajectory': [],
+            'us_trajectory': [],
+            'lower_level_log_trajectory': [],
+            'best_idx': None,
+            'best_loss': float('inf'),
+            'best_position': [],
+            'best_us': []
+        }
+        for idx, opt_log in enumerate(opt_log_list):
+            bilevel_opt_log['total_loss_trajectory'].append(opt_log['total_loss_trajectory'])
+            bilevel_opt_log['position_trajectory'].append(opt_log['position_trajectory'])
+            bilevel_opt_log['us_trajectory'].append(opt_log['us_trajectory'])
+            bilevel_opt_log['lower_level_log_trajectory'].append(opt_log['lower_level_log_trajectory'])
+            if opt_log['best_loss'] < bilevel_opt_log['best_loss']:
+                bilevel_opt_log['best_loss'] = opt_log['best_loss']
+                bilevel_opt_log['best_idx'] = np.array([idx, opt_log['best_idx']])
+                opt_action_pos = opt_action_pos_list[idx]
+            bilevel_opt_log['best_position'].append(opt_log['best_position'])
+            bilevel_opt_log['best_us'].append(opt_log['best_us'])
+        bilevel_opt_log['total_loss_trajectory'] = np.stack(bilevel_opt_log['total_loss_trajectory'], axis=1)
+        bilevel_opt_log['position_trajectory'] = np.stack(bilevel_opt_log['position_trajectory'], axis=1)
+        bilevel_opt_log['us_trajectory'] = np.stack(bilevel_opt_log['us_trajectory'], axis=1)
+        bilevel_opt_log['best_position'] = np.stack(bilevel_opt_log['best_position'], axis=1)
+        bilevel_opt_log['best_us'] = np.stack(bilevel_opt_log['best_us'], axis=1)
+        return opt_action_pos, bilevel_opt_log
