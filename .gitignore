@@ -133,3 +133,4 @@ dmypy.json
 # No log file
 /wandb
 /bilevel_opt_result
+/design_opt_experiment

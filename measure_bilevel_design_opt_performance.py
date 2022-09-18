@@ -2,6 +2,7 @@ import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 
 from src.utils.get_target import generate_target_trajectory
 
@@ -62,28 +63,35 @@ def plot_graph(optimized_graph, model_name):
 if __name__ == '__main__':
     with open('data/bilevel_design_opt/target.pkl', 'rb') as f:
         target = pickle.load(f)
-    solver_name = 'cma_es'
+    solver_names = ['cma_es', 'implicit_ICGAT', 'single_layer_ICGAT']
+    solver_names = ['cma_es']
+    # solver_names = ['implicit_ICGAT']
     num_x_list = [3, 4, 5]
     num_heaters_list = [5, 10, 15, 20]
 
     for num_x in num_x_list:
-        fig1, axes1 = plt.subplots(1, 1)
         for num_heaters in num_heaters_list:
-            loss_dict = {}
-            loss_list_dict = {}
-            path = 'bilevel_opt_result/optimal/{}'.format(solver_name)
-            mpc_config = pickle.load(open('{}/mpc_config_{}_{}.pkl'.format(path, num_x, num_heaters), 'rb'))
-            bilevel_optimal_result = pickle.load(
-                open('{}/optimal_result_{}_{}.pkl'.format(path, num_x, num_heaters), 'rb'))
-            opt_loss = measure_design_opt_control(mpc_config, bilevel_optimal_result)
-            axes1.plot(opt_loss)
-            print('Graph Size: ({}, {}), Solver: {}, Loss: {}'.format(num_x,
-                                                                      num_heaters,
-                                                                      solver_name,
-                                                                      np.average(opt_loss)))
-
-        axes1.legend()
-        axes1.set_yscale('log')
-        fig1.suptitle('{}, {}'.format(num_x, solver_name))
-        fig1.tight_layout()
-        fig1.show()
+            fig, axes = plt.subplots(2, len(solver_names), figsize=(len(solver_names)*5, 10))
+            axes_flatten = axes.flatten()
+            for p_idx, solver_name in enumerate(solver_names):
+                path = 'bilevel_opt_result/optimal/{}'.format(solver_name)
+                mpc_config = pickle.load(open('{}/mpc_config_{}_{}.pkl'.format(path, num_x, num_heaters), 'rb'))
+                bilevel_optimal_result = pickle.load(
+                    open('{}/optimal_result_{}_{}.pkl'.format(path, num_x, num_heaters), 'rb'))
+                opt_loss = measure_design_opt_control(mpc_config, bilevel_optimal_result)
+                axes_flatten[p_idx].plot(opt_loss, label=solver_name)
+                axes_flatten[p_idx].set_yscale('log')
+                print('Graph Size: ({}, {}), Solver: {}, Loss: {}'.format(num_x,
+                                                                          num_heaters,
+                                                                          solver_name,
+                                                                          np.average(opt_loss)))
+                bilevel_path = 'bilevel_opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters)
+                bilevel_opt_result = pickle.load(open(bilevel_path, 'rb'))
+                opt_action_pos = bilevel_opt_result['opt_action_pos'].cpu().detach().numpy()
+                print(opt_action_pos.shape)
+                axes_flatten[len(solver_names) + p_idx].scatter(opt_action_pos[:, 0], opt_action_pos[:, 1])
+                axes_flatten[len(solver_names) + p_idx].set_xlim([-1, 1])
+                axes_flatten[len(solver_names) + p_idx].set_ylim([-1, 1])
+            fig.suptitle('{}, {}'.format(num_x, num_heaters))
+            fig.tight_layout()
+            fig.show()

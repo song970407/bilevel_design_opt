@@ -257,7 +257,7 @@ class CMAESSolver(nn.Module):
                     log_traj.append(log)
                 if fitness < best_fitness:
                     print('Best Design Variable Found, Loss: {}'.format(fitness))
-                    best_action_pos = sampled_action_pos
+                    best_action_pos = sampled_action_pos.cpu().detach().numpy()
                     best_fitness = fitness
                     best_idx = upper_itr
                     best_us = optimal_us.cpu().detach().numpy()
