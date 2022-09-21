@@ -107,7 +107,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_x', type=int, default=3)
     parser.add_argument('--num_heaters', type=int, default=5)
-    parser.add_argument('--solver_name', type=str, default='cma_es')
+    parser.add_argument('--solver_name', type=str, default='solver_Linear')
     args = parser.parse_args()
 
     num_x = args.num_x
