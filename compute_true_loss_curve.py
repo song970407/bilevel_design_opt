@@ -120,9 +120,13 @@ if __name__ == '__main__':
     bilevel_opt_result = pickle.load(
         open('bilevel_opt_result/implicit_{}/{}_{}.pkl'.format(model_name, num_x, num_heaters), 'rb'))
     print(bilevel_opt_result.keys())
-    total_loss_trajectory = bilevel_opt_result['design_opt_log']['total_loss_trajectory']
-    position_trajectory = bilevel_opt_result['design_opt_log']['position_trajectory']
-    state_pos = bilevel_opt_result['design_opt_log']['']
+    if model_name == 'Linear':
+        total_loss_trajectory = bilevel_opt_result['opt_log']['total_loss_trajectory']
+        position_trajectory = bilevel_opt_result['opt_log']['position_trajectory']
+    else:
+        total_loss_trajectory = bilevel_opt_result['design_opt_log']['total_loss_trajectory']
+        position_trajectory = bilevel_opt_result['design_opt_log']['position_trajectory']
+    state_pos = problem['state_pos'][0]
 
     true_loss_result = {
         'x_trajectory_list': [],
