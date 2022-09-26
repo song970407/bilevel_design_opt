@@ -106,8 +106,8 @@ if __name__ == '__main__':
     mpc_config = {
         'ridge_coefficient': 0.0,
         'smoothness_coefficient': 0.0,
-        'target_values_list': target['target_values_list'],
-        'target_times_list': target['target_times_list'],
+        'target_values_list': target['target_values'],
+        'target_times_list': target['target_times'],
         'max_iter': 200,
         'loss_threshold': 1e-9,
         'opt_config': {'lr': 2e-0},
