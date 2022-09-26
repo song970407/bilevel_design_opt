@@ -100,7 +100,10 @@ if __name__ == '__main__':
     state_pos = prb_config['state_pos'][0]
     num_x = 4
     num_heaters = 5
-    model_names = ['Linear', 'GAT', 'ICGAT']
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_name', type=str, default='Linear')
+    args = parser.parse_args()
+    model_name = args.model_name
     problem = pickle.load(open('data/bilevel_design_opt/problem_{}_{}.pkl'.format(num_x, num_heaters), 'rb'))
     env_config = yaml.safe_load(open('config/env/env_config.yaml', 'r'))
     data_generation_config = yaml.safe_load(open('config/data/data_generation_config.yaml', 'r'))
@@ -124,34 +127,33 @@ if __name__ == '__main__':
     graph_list = []
     num_graphs = len(target_config['target_values_list'])
 
-    for model_name in model_names:
-        if not os.path.exists('bilevel_opt_result/optimal/true_loss/implicit_{}'.format(model_name)):
-            os.mkdir('bilevel_opt_result/optimal/true_loss/implicit_{}'.format(model_name))
-        print('Now Model: {}, x: {}, heater: {}'.format(model_name, num_x, num_heaters))
-        bilevel_opt_result = pickle.load(
-            open('bilevel_opt_result/implicit_{}/{}_{}.pkl'.format(model_name, num_x, num_heaters), 'rb'))
-        total_loss_trajectory = bilevel_opt_result['design_opt_log']['total_loss_trajectory']
-        position_trajectory = bilevel_opt_result['design_opt_log']['position_trajectory']
-        state_pos = bilevel_opt_result['design_opt_log']['']
+    if not os.path.exists('bilevel_opt_result/optimal/true_loss/implicit_{}'.format(model_name)):
+        os.mkdir('bilevel_opt_result/optimal/true_loss/implicit_{}'.format(model_name))
+    print('Now Model: {}, x: {}, heater: {}'.format(model_name, num_x, num_heaters))
+    bilevel_opt_result = pickle.load(
+        open('bilevel_opt_result/implicit_{}/{}_{}.pkl'.format(model_name, num_x, num_heaters), 'rb'))
+    total_loss_trajectory = bilevel_opt_result['design_opt_log']['total_loss_trajectory']
+    position_trajectory = bilevel_opt_result['design_opt_log']['position_trajectory']
+    state_pos = bilevel_opt_result['design_opt_log']['']
 
-        true_loss_result = {
-            'x_trajectory_list': [],
-            'u_trajectory_list': [],
-            'log_trajectory_list': []
-        }
+    true_loss_result = {
+        'x_trajectory_list': [],
+        'u_trajectory_list': [],
+        'log_trajectory_list': []
+    }
 
-        for i in range(total_loss_trajectory.shape[0]):
-            best_idx = np.argmin(total_loss_trajectory[i])
-            action_pos = position_trajectory[i, best_idx]
-            x_trajectory, u_trajectory, log_trajectory = run_optimal_control(mpc_config,
-                                                                             env_config,
-                                                                             data_generation_config,
-                                                                             data_preprocessing_config,
-                                                                             state_pos,
-                                                                             action_pos)
-            true_loss_result['x_trajectory_list'].append(x_trajectory)
-            true_loss_result['u_trajectory_list'].append(u_trajectory)
-            true_loss_result['log_trajectory_list'].append(log_trajectory)
-            pickle.dump(true_loss_result, open(
-                'bilevel_opt_result/optimal/true_loss/implicit_{}/{}_{}.pkl'.format(model_name, num_x, num_heaters),
-                'wb'))
+    for i in range(total_loss_trajectory.shape[0]):
+        best_idx = np.argmin(total_loss_trajectory[i])
+        action_pos = position_trajectory[i, best_idx]
+        x_trajectory, u_trajectory, log_trajectory = run_optimal_control(mpc_config,
+                                                                         env_config,
+                                                                         data_generation_config,
+                                                                         data_preprocessing_config,
+                                                                         state_pos,
+                                                                         action_pos)
+        true_loss_result['x_trajectory_list'].append(x_trajectory)
+        true_loss_result['u_trajectory_list'].append(u_trajectory)
+        true_loss_result['log_trajectory_list'].append(log_trajectory)
+        pickle.dump(true_loss_result, open(
+            'bilevel_opt_result/optimal/true_loss/implicit_{}/{}_{}.pkl'.format(model_name, num_x, num_heaters),
+            'wb'))
