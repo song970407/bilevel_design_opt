@@ -91,18 +91,11 @@ def run_optimal_control(mpc_config, env_config, data_generation_config, data_pre
 
 
 if __name__ == '__main__':
-    with open('data/control/design_opt/prb_config.pkl', 'rb') as f:
-        prb_config = pickle.load(f)
-    with open('data/env_config.pkl', 'rb') as f:
-        env_config = pickle.load(f)
-    with open('data/control/design_opt/target_config.pkl', 'rb') as f:
-        target_config = pickle.load(f)
-    state_pos = prb_config['state_pos'][0]
-    num_x = 4
-    num_heaters = 5
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_name', type=str, default='Linear')
     args = parser.parse_args()
+    num_x = 4
+    num_heaters = 5
     model_name = args.model_name
     problem = pickle.load(open('data/bilevel_design_opt/problem_{}_{}.pkl'.format(num_x, num_heaters), 'rb'))
     env_config = yaml.safe_load(open('config/env/env_config.yaml', 'r'))
@@ -111,21 +104,15 @@ if __name__ == '__main__':
     target = pickle.load(open('data/bilevel_design_opt/target.pkl', 'rb'))
 
     mpc_config = {
-        'ridge_coefficient': prb_config['ridge_coefficient'],
-        'smoothness_coefficient': prb_config['smoothness_coefficient'],
-        'target_values_list': target_config['target_values_list'],
-        'target_times_list': target_config['target_times_list'],
+        'ridge_coefficient': 0.0,
+        'smoothness_coefficient': 0.0,
+        'target_values_list': target['target_values_list'],
+        'target_times_list': target['target_times_list'],
         'max_iter': 200,
         'loss_threshold': 1e-9,
         'opt_config': {'lr': 2e-0},
         'scheduler_config': {'patience': 5, 'factor': 0.5, 'min_lr': 1e-4}
     }
-    model_names = ['Linear', 'GAT', 'ICGAT']
-
-    state_pos_list = []
-    action_pos_list = []
-    graph_list = []
-    num_graphs = len(target_config['target_values_list'])
 
     if not os.path.exists('bilevel_opt_result/optimal/true_loss/implicit_{}'.format(model_name)):
         os.mkdir('bilevel_opt_result/optimal/true_loss/implicit_{}'.format(model_name))
