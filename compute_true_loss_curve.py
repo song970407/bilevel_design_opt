@@ -73,7 +73,7 @@ def run_optimal_control(mpc_config, env_config, data_generation_config, data_pre
     trajectory_log = []
 
     for (i, target) in enumerate(target_list):
-        print('Now target number {}'.format(i))
+        # print('Now target number {}'.format(i))
         optimal_us, log = optimal_controller.solve(target)
         trajectory_log.append(log)
         x_traj = []
@@ -119,7 +119,6 @@ if __name__ == '__main__':
     print('Now Model: {}, x: {}, heater: {}'.format(model_name, num_x, num_heaters))
     bilevel_opt_result = pickle.load(
         open('bilevel_opt_result/implicit_{}/{}_{}.pkl'.format(model_name, num_x, num_heaters), 'rb'))
-    print(bilevel_opt_result.keys())
     if model_name == 'Linear':
         total_loss_trajectory = bilevel_opt_result['opt_log']['total_loss_trajectory']
         position_trajectory = bilevel_opt_result['opt_log']['position_trajectory']
@@ -135,6 +134,7 @@ if __name__ == '__main__':
     }
 
     for i in range(total_loss_trajectory.shape[0]):
+        print('Step: {}'.format(i))
         best_idx = np.argmin(total_loss_trajectory[i])
         action_pos = position_trajectory[i, best_idx]
         x_trajectory, u_trajectory, log_trajectory = run_optimal_control(mpc_config,
@@ -143,6 +143,13 @@ if __name__ == '__main__':
                                                                          data_preprocessing_config,
                                                                          state_pos,
                                                                          action_pos)
+        true_loss = {
+            'x_trajectory': x_trajectory,
+            'u_trajectory': u_trajectory,
+            'log_trajectory': log_trajectory
+        }
+        pickle.dump(true_loss, open('bilevel_opt_result/optimal/true_loss/implicit_{}/{}_{}_{}.pkl'.format(model_name, num_x, num_heaters, i), 'wb'))
+
         true_loss_result['x_trajectory_list'].append(x_trajectory)
         true_loss_result['u_trajectory_list'].append(u_trajectory)
         true_loss_result['log_trajectory_list'].append(log_trajectory)
