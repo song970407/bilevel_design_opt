@@ -93,10 +93,14 @@ def run_optimal_control(mpc_config, env_config, data_generation_config, data_pre
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_name', type=str, default='Linear')
+    parser.add_argument('--start_idx', type=int, default=0)
+    parser.add_argument('--end_idx', type=int, default=100)
     args = parser.parse_args()
     num_x = 4
     num_heaters = 5
     model_name = args.model_name
+    start_idx = args.start_idx
+    end_idx = args.end_idx
     problem = pickle.load(open('data/bilevel_design_opt/problem_{}_{}.pkl'.format(num_x, num_heaters), 'rb'))
     env_config = yaml.safe_load(open('config/env/env_config.yaml', 'r'))
     data_generation_config = yaml.safe_load(open('config/data/data_generation_config.yaml', 'r'))
@@ -134,6 +138,8 @@ if __name__ == '__main__':
     }
 
     for i in range(total_loss_trajectory.shape[0]):
+        if i < start_idx or i >= end_idx:
+            continue
         if os.path.isfile('bilevel_opt_result/optimal/true_loss/implicit_{}_8/{}_{}_{}.pkl'.format(model_name, num_x, num_heaters, i)):
             continue
         print('Step: {}'.format(i))
@@ -156,6 +162,4 @@ if __name__ == '__main__':
         true_loss_result['x_trajectory_list'].append(x_trajectory)
         true_loss_result['u_trajectory_list'].append(u_trajectory)
         true_loss_result['log_trajectory_list'].append(log_trajectory)
-        pickle.dump(true_loss_result, open(
-            'bilevel_opt_result/optimal/true_loss/implicit_{}_8/{}_{}.pkl'.format(model_name, num_x, num_heaters),
-            'wb'))
+        # pickle.dump(true_loss_result, open('bilevel_opt_result/optimal/true_loss/implicit_{}_8/{}_{}.pkl'.format(model_name, num_x, num_heaters), 'wb'))
