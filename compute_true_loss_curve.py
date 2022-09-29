@@ -114,8 +114,8 @@ if __name__ == '__main__':
         'scheduler_config': {'patience': 5, 'factor': 0.5, 'min_lr': 1e-4}
     }
 
-    if not os.path.exists('bilevel_opt_result/optimal/true_loss/implicit_{}'.format(model_name)):
-        os.mkdir('bilevel_opt_result/optimal/true_loss/implicit_{}'.format(model_name))
+    if not os.path.exists('bilevel_opt_result/optimal/true_loss/implicit_{}_8'.format(model_name)):
+        os.mkdir('bilevel_opt_result/optimal/true_loss/implicit_{}_8'.format(model_name))
     print('Now Model: {}, x: {}, heater: {}'.format(model_name, num_x, num_heaters))
     bilevel_opt_result = pickle.load(
         open('bilevel_opt_result/implicit_{}/{}_{}.pkl'.format(model_name, num_x, num_heaters), 'rb'))
@@ -134,8 +134,11 @@ if __name__ == '__main__':
     }
 
     for i in range(total_loss_trajectory.shape[0]):
+        if os.path.isfile('bilevel_opt_result/optimal/true_loss/implicit_{}_8/{}_{}_{}.pkl'.format(model_name, num_x, num_heaters, i)):
+            continue
         print('Step: {}'.format(i))
         best_idx = np.argmin(total_loss_trajectory[i])
+        best_idx = 8
         action_pos = position_trajectory[i, best_idx]
         x_trajectory, u_trajectory, log_trajectory = run_optimal_control(mpc_config,
                                                                          env_config,
@@ -148,11 +151,11 @@ if __name__ == '__main__':
             'u_trajectory': u_trajectory,
             'log_trajectory': log_trajectory
         }
-        pickle.dump(true_loss, open('bilevel_opt_result/optimal/true_loss/implicit_{}/{}_{}_{}.pkl'.format(model_name, num_x, num_heaters, i), 'wb'))
+        pickle.dump(true_loss, open('bilevel_opt_result/optimal/true_loss/implicit_{}_8/{}_{}_{}.pkl'.format(model_name, num_x, num_heaters, i), 'wb'))
 
         true_loss_result['x_trajectory_list'].append(x_trajectory)
         true_loss_result['u_trajectory_list'].append(u_trajectory)
         true_loss_result['log_trajectory_list'].append(log_trajectory)
         pickle.dump(true_loss_result, open(
-            'bilevel_opt_result/optimal/true_loss/implicit_{}/{}_{}.pkl'.format(model_name, num_x, num_heaters),
+            'bilevel_opt_result/optimal/true_loss/implicit_{}_8/{}_{}.pkl'.format(model_name, num_x, num_heaters),
             'wb'))
