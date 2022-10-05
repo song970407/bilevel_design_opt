@@ -65,7 +65,7 @@ if __name__ == '__main__':
         target = pickle.load(f)
     solver_names = ['cma_es', 'implicit_ICGAT', 'single_layer_ICGAT']
     # solver_names = ['cma_es']
-    solver_names = ['implicit_Linear']
+    solver_names = ['implicit_Linear', 'implicit_GAT', 'implicit_ICGAT']
     num_x_list = [3, 4, 5]
     num_heaters_list = [5, 10, 15, 20]
 

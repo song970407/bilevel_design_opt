@@ -1,17 +1,24 @@
 import argparse
-import yaml
 import pickle
 
+import dgl
+import matplotlib
+
+matplotlib.rcParams['font.family'] = ['Noto Serif', 'Serif']
 import matplotlib.pyplot as plt
-from matplotlib import ticker
+
+# plt.style.use('seaborn-talk')
+plt.style.use('seaborn-poster')
+
 import numpy as np
 import torch
-import dgl
+import yaml
+from matplotlib import ticker
 
 from src.model.get_model import get_model
 from src.utils.preprocess_data import preprocess_data
 
-plt.style.use('seaborn')
+# plt.style.use('seaborn')
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 
@@ -52,21 +59,29 @@ def predict_future(model_names, test_data, data_preprocessing_config, test_confi
 
 def plot_test_loss(model_loss_dict):
     gamma = 0.1
-    fig, axes = plt.subplots(1, 1, figsize=(10, 8))
+    label_size = 15
+    fig, axes = plt.subplots(1, 1, figsize=(7, 4))
+    # fig, axes = plt.subplots(1, 1)
     for model_name in model_loss_dict.keys():
         mean = model_loss_dict[model_name][0]
         std = model_loss_dict[model_name][1]
-        axes.plot(mean, label=model_name, linewidth=4)
-        axes.fill_between(range(mean.shape[0]), mean - gamma * std, mean + gamma * std, alpha=0.2)
-    axes.set_xlabel('Rollout Steps', fontsize=20)
-    axes.set_ylabel('Prediction MSE', fontsize=20)
-    axes.set_ylim([0.0, 0.002])
-    fmt = lambda x, pos: '{:.1f}'.format(x * 1e4)
-    axes.yaxis.set_major_formatter(ticker.FuncFormatter(fmt))
-    axes.tick_params(axis='x', labelsize=15)
-    axes.tick_params(axis='y', labelsize=15)
-    axes.legend(fontsize=25)
-    fig.tight_layout()
+        axes.plot(mean, label=model_name, linewidth=2)
+        axes.fill_between(range(mean.shape[0]),
+                          mean - gamma * std,
+                          mean + gamma * std, alpha=0.2)
+    axes.set_xlabel(r'Rollout Steps', fontsize=label_size)
+    axes.set_ylabel(r'Prediction MSE', fontsize=label_size)
+    # xes.set_ylim([0.0, 0.002])
+    # fmt = lambda x, pos: '{:.1f}'.format(x * 1e4)
+    axes.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+    # axes.tick_params(axis='x')
+    # axes.tick_params(axis='y')
+    axes.legend(fancybox=True, shadow=True)
+    axes.grid(True, which='both', ls='--')
+    axes.set_xlim(0, 10)
+    # axes.set_yscale('log')
+    # fig.tight_layout()
+    fig.savefig('pred_results2.pdf', bbox_inches='tight')
     fig.show()
 
 
