@@ -105,36 +105,40 @@ if __name__ == '__main__':
     }
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_x', type=int, default=3)
-    parser.add_argument('--num_heaters', type=int, default=5)
-    parser.add_argument('--solver_name', type=str, default='implicit_Linear')
+    # parser.add_argument('--num_x', type=int, default=3)
+    # parser.add_argument('--num_heaters', type=int, default=5)
+    parser.add_argument('--solver_name', type=str, default='implicit')
+    parser.add_argument('--model_name', type=str, default='Linear')
     args = parser.parse_args()
 
-    num_x = args.num_x
-    num_heaters = args.num_heaters
     solver_name = args.solver_name
+    model_name = args.model_name
 
     num_x_list = [3, 4, 5]
     num_heaters_list = [5, 10, 15, 20]
 
-    if not os.path.exists('bilevel_opt_result/optimal/{}'.format(solver_name)):
-        os.makedirs('bilevel_opt_result/optimal/{}'.format(solver_name))
+    if not os.path.exists('bilevel_opt_result/optimal/{}_{}'.format(solver_name, model_name)):
+        os.makedirs('bilevel_opt_result/optimal/{}_{}'.format(solver_name, model_name))
 
     for num_x in num_x_list:
         for num_heaters in num_heaters_list:
             opt_result = pickle.load(open('bilevel_opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'rb'))
             state_pos = pickle.load(open('data/bilevel_design_opt/problem_{}_{}.pkl'.format(num_x, num_heaters), 'rb'))['state_pos'][0]
-            action_pos = opt_result['opt_action_pos']
-            x_trajectory_list, u_trajectory_list, log_trajectory_list = run_optimal_control(mpc_config,
-                                                                                            env_config,
-                                                                                            data_generation_config,
-                                                                                            data_preprocessing_config,
-                                                                                            state_pos,
-                                                                                            action_pos)
-            pickle.dump(mpc_config, open('bilevel_opt_result/optimal/{}/mpc_config_{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
-            optimal_result = {
-                'x_trajectory_list': x_trajectory_list,
-                'u_trajectory_list': u_trajectory_list,
-                'log_trajectory_list': log_trajectory_list
-            }
-            pickle.dump(optimal_result, open('bilevel_opt_result/optimal/{}/optimal_result_{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
+            num_repeats = opt_result['opt_log']['total_loss_trajectory'].shape[1]
+            for i in range(num_repeats):
+                print('Now {}, {}, {}'.format(num_x, num_heaters, i))
+                best_idx = np.argmin(opt_result['opt_log']['total_loss_trajectory'][:, i])
+                action_pos = opt_result['opt_log']['position_trajectory'][best_idx, i]
+                x_trajectory_list, u_trajectory_list, log_trajectory_list = run_optimal_control(mpc_config,
+                                                                                                env_config,
+                                                                                                data_generation_config,
+                                                                                                data_preprocessing_config,
+                                                                                                state_pos,
+                                                                                                action_pos)
+                # pickle.dump(mpc_config, open('bilevel_opt_result/optimal/{}/mpc_config_{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'wb'))
+                optimal_result = {
+                    'x_trajectory_list': x_trajectory_list,
+                    'u_trajectory_list': u_trajectory_list,
+                    'log_trajectory_list': log_trajectory_list
+                }
+                pickle.dump(optimal_result, open('bilevel_opt_result/optimal/{}_{}/{}_{}_{}.pkl'.format(solver_name, model_name, num_x, num_heaters, i), 'wb'))

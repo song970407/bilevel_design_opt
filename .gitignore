@@ -134,3 +134,4 @@ dmypy.json
 /wandb
 /bilevel_opt_result
 /design_opt_experiment
+/old_script
