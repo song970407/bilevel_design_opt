@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
     for num_x in num_x_list:
         for num_heaters in num_heaters_list:
-            opt_result = pickle.load(open('bilevel_opt_result/{}/{}_{}.pkl'.format(solver_name, num_x, num_heaters), 'rb'))
+            opt_result = pickle.load(open('bilevel_opt_result/{}_{}/{}_{}.pkl'.format(solver_name, model_name, num_x, num_heaters), 'rb'))
             state_pos = pickle.load(open('data/bilevel_design_opt/problem_{}_{}.pkl'.format(num_x, num_heaters), 'rb'))['state_pos'][0]
             num_repeats = opt_result['opt_log']['total_loss_trajectory'].shape[1]
             for i in range(num_repeats):
