@@ -264,7 +264,7 @@ class CMAESSolver(nn.Module):
                 solutions.append((x, fitness))
             optimizer.tell(solutions)
             with torch.no_grad():
-                total_loss_trajectory.append(log_traj)
+                total_loss_trajectory.append(loss_traj)
                 position_trajectory.append(pos_traj)
                 us_trajectory.append(u_traj)
                 lower_level_log_trajectory.append(log_traj)

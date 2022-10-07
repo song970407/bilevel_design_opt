@@ -127,6 +127,8 @@ if __name__ == '__main__':
             num_repeats = opt_result['opt_log']['total_loss_trajectory'].shape[1]
             for i in range(num_repeats):
                 print('Now {}, {}, {}'.format(num_x, num_heaters, i))
+                if os.path.isfile('bilevel_opt_result/optimal/{}_{}/{}_{}_{}.pkl'.format(solver_name, model_name, num_x, num_heaters, i)):
+                    continue
                 best_idx = np.argmin(opt_result['opt_log']['total_loss_trajectory'][:, i])
                 action_pos = opt_result['opt_log']['position_trajectory'][best_idx, i]
                 x_trajectory_list, u_trajectory_list, log_trajectory_list = run_optimal_control(mpc_config,
