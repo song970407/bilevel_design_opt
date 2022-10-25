@@ -63,9 +63,8 @@ def plot_graph(optimized_graph, model_name):
 if __name__ == '__main__':
     with open('data/bilevel_design_opt/target.pkl', 'rb') as f:
         target = pickle.load(f)
-    solver_names = ['cma_es', 'implicit', 'single_layer']
+    solver_names = ['cma_es', 'implicit_ICGAT', 'single_layer_ICGAT']
     # solver_names = ['cma_es']
-    model_names = ['ICGAT']
     solver_names = ['implicit_Linear', 'implicit_GAT', 'implicit_ICGAT']
     num_x_list = [3, 4, 5]
     num_heaters_list = [5, 10, 15, 20]
